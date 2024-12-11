@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MISP Curation Summary</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="assets/favicon.png"> <!-- Add favicon -->
+    <style>
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            font-size: 14px;
+            margin: 0;
+            padding: 0;
+            background-color: #f2f2f2;
+            color: #333;
+        }
+        header {
+            background-color: #FF6600;
+            color: white;
+            padding: 10px 20px;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+        header .date {
+            font-size: 0.8rem;
+        }
+        .logo-container {
+            text-align: center;
+            margin-top: 10px;
+        }
+        .logo-container img {
+            max-height: 50px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+        .button-bar {
+            display: flex;
+            justify-content: flex-start;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .button-bar a {
+            text-decoration: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background-color 0.3s, box-shadow 0.3s;
+            color: white;
+        }
+        .button-bar a.summary {
+            background-color: #FF6600;
+        }
+        .button-bar a.summary:hover {
+            background-color: #e65c00;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        .button-bar a.curation {
+            background-color: #FF8800;
+        }
+        .button-bar a.curation:hover {
+            background-color: #e67a00;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        .button-bar a.infrastructure {
+            background-color: #FF9900;
+        }
+        .button-bar a.infrastructure:hover {
+            background-color: #e68a00;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        .charts {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+            text-align: center;
+        }
+        .chart {
+            flex: 1;
+        }
+        .chart.full-width {
+            width: 100%;
+        }
+        .tables {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .table {
+            flex: 1;
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 6px 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #FF6600;
+            color: white;
+        }
+        td.align-right {
+            text-align: right;
+        }
+        .separator {
+            margin: 30px 0;
+            border-top: 2px solid #FF6600;
+        }
+        footer {
+            text-align: center;
+            font-size: 12px;
+            color: gray;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>MISP Curation Summary</h1>
+        <div class="date">{{ report_date }}</div>
+    </header>
+    <div class="logo-container">
+        <img src="{{ logo }}" alt="Logo">
+    </div>
+    <div class="container">
+        <div class="button-bar">
+            <a href="misp_summary.html" class="summary">Summary</a>
+            <a href="misp_curation.html" class="curation">Curation Overview</a>
+            <a href="misp_infrastructure.html" class="infrastructure">Infrastructure Monitoring</a>
+        </div>
+        <h1>Summary</h1>
+    </div>
+
+    <footer>
+        Source server: {{ report_misp_server }}<br />
+        Timestamp {{ report_timestamp }}
+    </footer>
+</body>
+</html>

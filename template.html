@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MISP Summary</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="assets/favicon.png"> <!-- Add favicon -->
+    <style>
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            font-size: 14px;
+            margin: 0;
+            padding: 0;
+            background-color: #f2f2f2;
+            color: #333;
+        }
+        header {
+            background-color: #FF6600;
+            color: white;
+            padding: 10px 20px;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+        header .date {
+            font-size: 0.8rem;
+        }
+        .logo-container {
+            text-align: center;
+            margin-top: 10px;
+        }
+        .logo-container img {
+            max-height: 50px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+        .button-bar {
+            display: flex;
+            justify-content: flex-start;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .button-bar a {
+            text-decoration: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background-color 0.3s, box-shadow 0.3s;
+            color: white;
+        }
+        .button-bar a.summary {
+            background-color: #FF6600;
+        }
+        .button-bar a.summary:hover {
+            background-color: #e65c00;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        .button-bar a.curation {
+            background-color: #FF8800;
+        }
+        .button-bar a.curation:hover {
+            background-color: #e67a00;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        .button-bar a.infrastructure {
+            background-color: #FF9900;
+        }
+        .button-bar a.infrastructure:hover {
+            background-color: #e68a00;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        .charts {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+            text-align: center;
+        }
+        .chart {
+            flex: 1;
+        }
+        .chart.full-width {
+            width: 100%;
+        }
+        .tables {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .table {
+            flex: 1;
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 6px 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #FF6600;
+            color: white;
+        }
+        td.align-right {
+            text-align: right;
+        }
+        .separator {
+            margin: 30px 0;
+            border-top: 2px solid #FF6600;
+        }
+        footer {
+            text-align: center;
+            font-size: 12px;
+            color: gray;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>MISP Summary</h1>
+        <div class="date">{{ report_date }}</div>
+    </header>
+    <div class="logo-container">
+        <img src="{{ logo }}" alt="Logo">
+    </div>
+    <div class="container">
+        <div class="button-bar">
+            <a href="misp_summary.html" class="summary">Summary</a>
+            <a href="misp_curation.html" class="curation">Curation Overview</a>
+            <a href="misp_infrastructure.html" class="infrastructure">Infrastructure Monitoring</a>
+        </div>
+        <h1>Summary of published events</h1>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Summary period</th>
+                    <th>Events (period)</th>
+                    <th>Attributes (period)</th>
+                    <th>Events (total)</th>
+                    <th>Attributes (total)</th>                    
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>{{ summary.period }}</td>
+                    <td class="align-right">{{ summary.periodevents }}</td>
+                    <td class="align-right">{{ summary.periodattributes }}</td>
+                    <td class="align-right">{{ summary.events }}</td>
+                    <td class="align-right">{{ summary.attributes }}</td>                    
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>Trending events and attributes</h2>
+        <div class="charts">
+            <div class="chart">
+                <img src="{{ events_trending_path }}" alt="Trending published events">
+            </div>
+            <div class="chart">
+                <img src="{{ attributes_trending_path }}" alt="Trending published attributes">
+            </div>
+        </div>
+        <div class="tables">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Period</th>
+                        <th>Events</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for month, value in trending_events.items() %}
+                    <tr>
+                        <td>{{ month }}</td>
+                        <td>{{ value }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Period</th>
+                        <th>Attributes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for month, value in trending_attributes.items() %}
+                    <tr>
+                        <td>{{ month }}</td>
+                        <td>{{ value }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="separator"></div>
+        
+        <h2>Attributes type distribution</h2>
+        <div class="chart full-width">
+            <img src="{{ attributes_type_bar_chart_path }}" alt="Attributes Type Distribution">
+        </div>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Attribute Type</th>
+                    <th>Count</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for attr_type, count in attributes_type.items() %}
+                <tr>
+                    <td>{{ attr_type }}</td>
+                    <td>{{ count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <h2>Activity of key organisations</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Logo</th>
+                    <th>Organisation</th>
+                    <th>Last 30 Days - Events</th>
+                    <th>Last 30 Days - Attributes</th>
+                    <th>Total - Events</th>
+                    <th>Total - Attributes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for org_name, org_data in keyorgs.items() %}
+                <tr>
+                    <td>
+                        {% if org_data.logo %}
+                        <img src="assets/{{ org_data.logo }}" alt="{{ org_name }}" style="height: 40px;">
+                        {% endif %}
+                    </td>
+                    <td>{{ org_name }}</td>
+                    <td class="align-right">{{ org_data['period_events'] }}</td>
+                    <td class="align-right">{{ org_data['period_attributes'] }}</td>
+                    <td class="align-right">{{ org_data['all_events'] }}</td>
+                    <td class="align-right">{{ org_data['all_attributes'] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="separator"></div>
+
+        <h2>Threat level and TLP distribution of events</h2>
+        <div class="charts">
+            <div class="chart">
+                <img src="{{ threatlevel_bar_chart_path }}" alt="Threat Level Bar Chart">
+            </div>
+            <div class="chart">
+                <img src="{{ tlp_pie_chart_path }}" alt="TLP Pie Chart">
+            </div>
+        </div>
+        <div class="tables">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Level</th>
+                        <th>Count</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for level, count in threatlevel.items() %}
+                    <tr>
+                        <td>{{ level }}</td>
+                        <td>{{ count }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>TLP</th>
+                        <th>Count</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tlp, count in tlp.items() %}
+                    <tr>
+                        <td>{{ tlp }}</td>
+                        <td>{{ count }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <h2>Event details</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>                    
+                    <th>Date</th>
+                    <th>Organisation</th>
+                    <th>Distribution</th>
+                    <th>Analysis</th>
+                    <th>Threat Level</th>
+                    <th>Published</th>
+                    <th>TLP</th>
+                    <th>Info</th>
+                    <th>Indicators</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in detailed_events %}
+                <tr>
+                    <td>{{ event.id }}</td>                    
+                    <td>{{ event.date }}</td>
+                    <td>{{ event.org }}</td>
+                    <td>{{ event.distribution }}</td>
+                    <td>{{ event.analysis }}</td>
+                    <td>{{ event.threat_level }}</td>
+                    <td>{{ event.published }}</td>
+                    <td>{{ event.tlp }}</td>
+                    <td>{{ event.info }}</td>
+                    <td>{{ event.indicators }}</td>               
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="container">
+        <h2>Geo targeting</h2>
+        <div class="chart">
+            <img src="{{ geo_targeting_map_path }}" alt="Geo Targeting Map">
+        </div>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Country</th>
+                    <th>Target Count</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for country, count in target_geo.items() %}
+                <tr>
+                    <td>{{ country }}</td>
+                    <td>{{ count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <h2>Sector Targeting</h2>
+        <div class="chart">
+            <img src="{{ sector_targeting_bar_chart_path }}" alt="Sector Targeting Chart">
+        </div>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Sector</th>
+                    <th>Target Count</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sector, count in target_sector.items() %}
+                <tr>
+                    <td>{{ sector }}</td>
+                    <td>{{ count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>    
+
+    <div class="container">
+        <h2>TTPs</h2>
+        <div class="tables">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Actors</th>
+                        <th>Count</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for actor, count in ttp_actors.items() %}
+                    <tr>
+                        <td>{{ actor }}</td>
+                        <td>{{ count }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Patterns</th>
+                        <th>Count</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pattern, count in ttp_pattern.items() %}
+                    <tr>
+                        <td>{{ pattern }}</td>
+                        <td>{{ count }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>        
+    </div>
+
+    <div class="container">
+        <h2>Vulnerabilities and weaknesses</h2>
+        <div class="tables">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Vulnerability</th>
+                        <th>Summary</th>
+                        <th>CVSSv3</th></h>
+                        <th>Count</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cve, detail in vulnerabilities.items() %}
+                    <tr>
+                        <td>{{ cve }}</td>
+                        <td style="text-align:left">{{ detail.summary }}</td>
+                        <td>{{ detail.cvss3 }}</td>
+                        <td>{{ detail.count }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>        
+    </div>
+
+    <footer>
+        Source server: {{ report_misp_server }}<br />
+        Timestamp {{ report_timestamp }}
+    </footer>
+</body>
+</html>
