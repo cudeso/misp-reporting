@@ -29,3 +29,15 @@ Copy logo and organisation logos
 ```
 python reporting.py
 ```
+
+![docs/demo1.jpg](docs/demo1.jpg)
+
+![docs/demo2.jpg](docs/demo2.jpg)
+
+![docs/demo3.jpg](docs/demo3.jpg)
+
+![docs/demo4.jpg](docs/demo4.jpg)
+
+![docs/demo5.jpg](docs/demo5.jpg)
+
+![docs/demo6.jpg](docs/demo6.jpg)
