@@ -23,26 +23,27 @@ def main(config):
 
     data = ReportingData(config, logger)
     data.get_statistics()
+    data.get_today_events_attributes()
     data.get_trending_events_attributes()
     data.get_statistics_attributes()
     data.get_statistics_keyorgs()
     data.get_threatlevel()
     data.get_tlplevel()
-    data.get_eventdetails()
+    #data.get_eventdetails()
     data.get_target_sector()
     data.get_target_geo()
     data.get_ttp()
     data.get_vulnerabilities()
 
-    data.get_curation()
+    #data.get_curation()
 
-    data.get_infrastructure()
+    #data.get_infrastructure()
 
     reporting = Reporting(config, logger, data.data)
     reporting.write_index()
     reporting.render_report()
-    reporting.render_curation_report()
-    reporting.render_infrastructure()
+    #reporting.render_curation_report()
+    #reporting.render_infrastructure()
 
     logger.info("End ".format(config["logname"]))
 

@@ -16,6 +16,7 @@ config = {
 
         "output_assets": "assets",
         "output_dir": "/var/www/MISP/app/webroot/reporting/reporting",
+        "template_css": "templates/style.css",
         "template_html": "template.html",
         "template_curation_html": "template_curation.html",
         "template_infrastructure_html": "template_infrastructure.html",

@@ -25,6 +25,7 @@ class ReportingData():
         self.misp = PyMISP(self.config["misp_url"], self.config["misp_key"], self.config["misp_verifycert"])
         self.data = {}
         self.data_for_reporting_period = False
+        self.data_for_today = False
 
         self.attribute_summary = self.config["attribute_summary"]
         self.attribute_other = self.config["attribute_other"]
@@ -57,6 +58,21 @@ class ReportingData():
             self.data["statistics"]["event_count"] = json_statistics["event_count"]
             self.data["statistics"]["attribute_count"] = json_statistics["attribute_count"]
             self.data["statistics"]["correlation_count"] = json_statistics["correlation_count"]
+
+    def get_today_events_attributes(self):
+        self.logger.debug("Started {}".format(inspect.currentframe().f_code.co_name))
+
+        self.data["today-events"] = {}
+        self.data["today-attributes"] = {}
+        response = self._get_data_for_today()
+        self.data["today-events"] = len(response)
+        attributesqt = 0
+        for event in response:
+            attributesqt += len(event["Event"]["Attribute"])
+            for misp_object in event["Event"]["Object"]:
+                attributesqt += len(misp_object["Attribute"])
+        self.data["today-attributes"] = attributesqt
+
 
     def get_trending_events_attributes(self):
         self.logger.debug("Started {}".format(inspect.currentframe().f_code.co_name))
@@ -367,6 +383,20 @@ class ReportingData():
                 current_page += 1
             self.data_for_reporting_period = response
         return self.data_for_reporting_period
+    
+    def _get_data_for_today(self, published=True):
+        response = []
+        if not self.data_for_today:
+            current_page = 1
+            while True:
+                tmp_reponse = self.misp.search("events", limit=self.config["misp_page_size"], page=current_page, published=published, publish_timestamp="1d", tags=self.config["reporting_filter"])
+                if len(tmp_reponse) > 0:
+                    response = response + tmp_reponse
+                else:
+                    break
+                current_page += 1
+            self.data_for_today = response
+        return self.data_for_today
 
     def _convert_attribute_category(self, category):
         found_key = None

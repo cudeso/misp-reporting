@@ -24,7 +24,9 @@ class Reporting:
 
         self.report_date = datetime.now().strftime("%Y-%m-%d")
         self.report_misp_server = self.config["misp_url"]
+        self.reporting_period = self.config["reporting_period"]
         self.output_dir = self.config["output_dir"]
+        self.template_css = self.config["template_css"]
         self.template_html = self.config["template_html"]
         self.template_curation_html = self.config["template_curation_html"]
         self.template_infrastructure_html = self.config["template_infrastructure_html"]
@@ -74,12 +76,19 @@ class Reporting:
     def render_infrastructure(self):
         self.logger.debug("Started {}".format(inspect.currentframe().f_code.co_name))
 
+        template_css_file = self.template_css
+        with open(template_css_file, "r") as f:
+            css_content = f.read()
+
         template_file = self.template_infrastructure_html
         with open(template_file, "r") as f:
             html_template = f.read()
+
         # Render the HTML
         template = Template(html_template)
         html_content = template.render(
+            css=css_content,
+            title="MISP Infrastructure Summary",            
             logo=self.config["logo"],            
             report_date=self.report_date,
             report_timestamp=datetime.now().strftime('%Y%m%d %H%M%S'),
@@ -179,6 +188,10 @@ class Reporting:
             self.data_for_report[key2] = {}
             self.logger.error(" Not found: {} or {}".format(key1, key2))
 
+        template_css_file = self.template_css
+        with open(template_css_file, "r") as f:
+            css_content = f.read()
+
         template_file = self.template_curation_html  
         with open(template_file, "r") as f:
             html_template = f.read()
@@ -186,6 +199,8 @@ class Reporting:
         # Render the HTML
         template = Template(html_template)
         html_content = template.render(
+            css=css_content,
+            title="MISP Curation Summary",            
             logo=self.config["logo"],
             report_date=self.report_date,
             report_timestamp=datetime.now().strftime('%Y%m%d %H%M%S'),
@@ -272,11 +287,11 @@ class Reporting:
         key = "trending-events"
         if key in self.data:
             dataset = self.data[key]
-            reporting_period = int("30d".strip("d"))
+            days = int(self.config["reporting_period"].strip("d"))
             sorted_keys = sorted(dataset.keys(), reverse=True)
             updated_dataset = {}
             highest_key = sorted_keys[0]
-            updated_dataset[f"{highest_key + reporting_period}d-{highest_key}d"] = dataset[highest_key]
+            updated_dataset[f"{highest_key + days}d-{highest_key}d"] = dataset[highest_key]
             for start, end in zip(sorted_keys[1:], sorted_keys):
                 updated_dataset[f"{end}d-{start}d"] = dataset[start]
             self.data_for_report[key] = updated_dataset
@@ -291,11 +306,11 @@ class Reporting:
         key = "trending-attributes"
         if key in self.data:
             dataset = self.data[key]
-            reporting_period = int("30d".strip("d"))
+            days = int(self.config["reporting_period"].strip("d"))
             sorted_keys = sorted(dataset.keys(), reverse=True)
             updated_dataset = {}
             highest_key = sorted_keys[0]
-            updated_dataset[f"{highest_key + reporting_period}d-{highest_key}d"] = dataset[highest_key]
+            updated_dataset[f"{highest_key + days}d-{highest_key}d"] = dataset[highest_key]
             for start, end in zip(sorted_keys[1:], sorted_keys):
                 updated_dataset[f"{end}d-{start}d"] = dataset[start]
 
@@ -356,18 +371,23 @@ class Reporting:
             updated_dataset = {}
             for uuid in dataset:
                 if uuid in self.key_organisations:
-                    org = self.misp.get_organisation(uuid)
-                    if "Organisation" in org:
-                        org_name = org["Organisation"]["name"]
-                        logo = self.key_organisations[uuid]["logo"]
-                        period_events = dataset[uuid]["reporting-period"]["events"]
-                        period_attributes = dataset[uuid]["reporting-period"]["attributes"]
-                        all_events = dataset[uuid]["all"]["events"]
-                        all_attributes = dataset[uuid]["all"]["attributes"]
-                        updated_dataset[org_name] = {"logo": f"{logo}", "period_events": f"{period_events}",
-                                                     "period_attributes": f"{period_attributes}",
-                                                     "all_events": f"{all_events}",
-                                                     "all_attributes": f"{all_attributes}"}
+                    try:
+                        org = self.misp.get_organisation(uuid)
+                        if "Organisation" in org:
+                            org_name = org["Organisation"]["name"]
+                            logo = self.key_organisations[uuid]["logo"]
+                            period_events = dataset[uuid]["reporting-period"]["events"]
+                            period_attributes = dataset[uuid]["reporting-period"]["attributes"]
+                            all_events = dataset[uuid]["all"]["events"]
+                            all_attributes = dataset[uuid]["all"]["attributes"]
+                            updated_dataset[org_name] = {"logo": f"{logo}", "period_events": f"{period_events}",
+                                                        "period_attributes": f"{period_attributes}",
+                                                        "all_events": f"{all_events}",
+                                                        "all_attributes": f"{all_attributes}"}
+                        else:
+                            self.logger.error("Unable to get organisation info for {}".format(uuid))
+                    except:
+                        self.logger.error("Unable to get organisation info for {}".format(uuid))
             self.data_for_report[key] = updated_dataset
             self.logger.debug(" Created {}".format(key))
         else:
@@ -383,15 +403,26 @@ class Reporting:
             current_date = datetime.now()
             past_date = current_date - timedelta(days=days)
             reporting_period = self.config["reporting_period"]
-            updated_dataset["period"] = f"Reporting for the last {reporting_period} (until {past_date.strftime('%Y-%m-%d')})"
+            updated_dataset["period"] = f"Reporting until {past_date.strftime('%Y-%m-%d')}"
             if self.config["reporting_filter"] is not None:
                 updated_dataset["period"] = "{}<br />MISP filters: {}".format(updated_dataset["period"], self.config["reporting_filter"])
-            updated_dataset["periodevents"] = self.data["trending-events"][0]
-            updated_dataset["periodattributes"] = self.data["trending-attributes"][0]
+            if "trending-events" in self.data:
+                updated_dataset["period_events"] = self.data["trending-events"][0]
+                updated_dataset["period_attributes"] = self.data["trending-attributes"][0]
+            else:
+                updated_dataset["period_events"] = "No data"
+                updated_dataset["period_attributes"] = "No data"
+            if "today-events" in self.data:
+                updated_dataset["today_events"] = self.data["today-events"]
+                updated_dataset["today_attributes"] = self.data["today-attributes"]
+            else:
+                updated_dataset["today_events"] = "No data"
+                updated_dataset["today_attributes"] = "No data"
             updated_dataset["events"] = dataset["event_count"]
             updated_dataset["attributes"] = dataset["attribute_count"]
             updated_dataset["correlations"] = dataset["correlation_count"]
             updated_dataset["organisations"] = dataset["org_count"]
+            updated_dataset["local_organisations"] = dataset["local_org_count"]
             updated_dataset["users"] = dataset["user_count"]
             self.data_for_report[key] = updated_dataset
             self.logger.debug(" Created {}".format(key))
@@ -470,16 +501,22 @@ class Reporting:
             self.data_for_report[key] = {}
             self.logger.error(" Not found: {}".format(key))
 
+        template_css_file = self.template_css
+        with open(template_css_file, "r") as f:
+            css_content = f.read()
+    
         template_file = self.template_html
         with open(template_file, "r") as f:
             html_template = f.read()
 
         template = Template(html_template)
         html_content = template.render(
+            css=css_content,
+            title="MISP Summary",
             logo=self.config["logo"],            
             report_date=self.report_date,
             report_timestamp=datetime.now().strftime('%Y%m%d %H%M%S'),
-
+            reporting_period=self.config["reporting_period"],
             report_misp_server=self.report_misp_server,
             summary=self.data_for_report.get("statistics", {}),
             trending_events=self.data_for_report.get("trending-events", {}),
@@ -524,6 +561,9 @@ class Reporting:
         labels = list(data.keys())
         values = list(data.values())
 
+        if all(v == 0 for v in values):
+            values = [0.1] * len(values)  # Avoid fully empty chart
+
         cmap = plt.colormaps['Oranges']
         colors = [cmap(i / len(labels)) for i in range(len(labels))]
 
@@ -531,7 +571,16 @@ class Reporting:
         plt.barh(labels, values, color=colors)
         plt.title(title)
         plt.xlabel("Count")
-        plt.xticks(range(min(values), max(values) + 1))
+
+        if all(v == 0.1 for v in values):
+            plt.text(0.5, 0.5, "No data available", fontsize=12, ha="center", transform=plt.gca().transAxes)
+
+        # Adjust x-ticks
+        if max(values) == 0.1:  # If it's just dummy data
+            plt.xticks([0, 1])
+        else:
+            plt.xticks(range(0, max(values) + 1))
+
         plt.tight_layout()
         plt.savefig(output_path, dpi=100)
         plt.close()
@@ -539,6 +588,10 @@ class Reporting:
     def create_bar_chart(self, data, output_path, title, full_width=False):
         labels = list(data.keys())
         values = list(data.values())
+
+        if all(v == 0 for v in values):
+            values = [0.1] * len(values)  # Avoid fully empty chart
+
         figsize = (8, 4) if full_width else (4, 3)
 
         cmap = plt.colormaps['Oranges']
@@ -553,6 +606,11 @@ class Reporting:
         ax.xaxis.set_major_locator(MultipleLocator(1))
         plt.xticks(fontsize=8, rotation=45)
         plt.yticks(fontsize=8)
+
+        # If dummy values were used, indicate it
+        if all(v == 0.1 for v in values):
+            plt.text(0.5, 0.5, "No data available", fontsize=12, ha="center", transform=plt.gca().transAxes)
+
         plt.tight_layout()
         plt.savefig(output_path, dpi=100)
         plt.close()
@@ -561,20 +619,36 @@ class Reporting:
         labels = list(data.keys())
         sizes = list(data.values())
 
-        plt.figure(figsize=(4, 3))
-        plt.pie(
-            sizes,
-            labels=labels,
-            autopct="%1.1f%%",
-            startangle=90,
-            colors=colors,
-            wedgeprops={'width': 0.4}
-        )
-        plt.title(title, fontsize=10)
-        plt.axis("equal")
-        plt.tight_layout()
-        plt.savefig(output_path, dpi=100)
-        plt.close()
+        if sum(sizes) == 0:
+            self.logger.info("No data to display in pie chart.")
+            plt.figure(figsize=(4, 3))
+            plt.pie(
+                [1],  # Single value to create a full circle
+                labels=["No data"],
+                colors=["lightgrey"],
+                startangle=90,
+                wedgeprops={'width': 0.4}
+            )
+            plt.title(title, fontsize=10)
+            plt.axis("equal")
+            plt.tight_layout()
+            plt.savefig(output_path, dpi=100)
+            plt.close()
+        else:        
+            plt.figure(figsize=(4, 3))
+            plt.pie(
+                sizes,
+                labels=labels,
+                autopct="%1.1f%%",
+                startangle=90,
+                colors=colors,
+                wedgeprops={'width': 0.4}
+            )
+            plt.title(title, fontsize=10)
+            plt.axis("equal")
+            plt.tight_layout()
+            plt.savefig(output_path, dpi=100)
+            plt.close()
 
     def create_trending_graph(self, data, output_path, title):
         months = list(data.keys())

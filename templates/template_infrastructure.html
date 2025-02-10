@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="assets/favicon.png"> <!-- Add favicon -->
+    <style>{{ css | safe }}</style>
+</head>
+<body>
+    <header>
+        <h1>{{ title }}</h1>
+        <div class="date">{{ report_date }}</div>
+    </header>
+    <div class="logo-container">
+        <img src="{{ logo }}" alt="Logo">
+    </div>
+    <div class="container">
+        <div class="button-bar">
+            <a href="misp_summary.html" class="summary">Summary</a>
+            <a href="misp_curation.html" class="curation">Curation Overview</a>
+            <a href="misp_infrastructure.html" class="infrastructure">Infrastructure Monitoring</a>
+        </div>
+        <h1>Summary</h1>
+    </div>
+
+    <footer>
+        Source server: {{ report_misp_server }}<br />
+        Timestamp {{ report_timestamp }}
+    </footer>
+</body>
+</html>
