@@ -4,10 +4,11 @@ config = {
 
         "reporting_period": "30d",
         "reporting_filter": None,
-        "reporting_keyorgs_allevents": False,
+        #"reporting_keyorgs_allevents": False,
         "reporting_eventdetails_onlykeyorgs": True,
         "reporting_trending_count": 6,
-
+        "print_event_details": False,
+        
         "misp_url": "",
         "misp_verifycert": False,
         "misp_key": "",
@@ -16,7 +17,6 @@ config = {
 
         "output_assets": "assets",
         "output_dir": "/var/www/MISP/app/webroot/reporting/reporting",
-        "template_css": "templates/style.css",
         "template_html": "template.html",
         "template_curation_html": "template_curation.html",
         "template_infrastructure_html": "template_infrastructure.html",

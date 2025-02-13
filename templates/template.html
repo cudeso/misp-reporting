@@ -116,36 +116,43 @@
 
         <div class="separator"></div>
         
-        <h2>Attributes type distribution ({{ reporting_period }})</h2>
-        <div class="chart full-width">
-            <img src="{{ attributes_type_bar_chart_path }}" alt="Attributes Type Distribution">
-        </div>
+        <h2>Attributes type distribution</h2>
+        <div class="charts">
+            <div class="chart">
+                <img src="{{ attributes_type_daily_bar_chart_path }}" alt="Attributes type distribution">
+            </div>            
+            <div class="chart">
+                <img src="{{ attributes_type_bar_chart_path }}" alt="Attributes type distribution">
+            </div>
+        </div>        
         <table class="table">
             <thead>
                 <tr>
-                    <th>Attribute Type</th>
-                    <th>Count</th>
+                    <th>Attribute type</th>
+                    <th>24h</th>
+                    <th>{{ reporting_period }}</th>
                 </tr>
             </thead>
             <tbody>
                 {% for attr_type, count in attributes_type.items() %}
                 <tr>
                     <td>{{ attr_type }}</td>
-                    <td>{{ count }}</td>
+                    <td>{{ count[0] }}</td>
+                    <td>{{ count[1] }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
-        <h2>Activity of key organisations ({{ reporting_period }})</h2>
+        <h2>Activity of key organisations</h2>
         <table class="table">
             <thead>
                 <tr>
                     <th>Logo</th>
                     <th>Organisation</th>
-                    <th>Last 30 Days - Events</th>
-                    <th>Last 30 Days - Attributes</th>
-                    <th>Total - Events</th>
-                    <th>Total - Attributes</th>
+                    <th>Events (24h)</th>
+                    <th>Attributes (24h)</th>
+                    <th>Events ({{ reporting_period }})</th>
+                    <th>Attributes ({{ reporting_period }})</th>
                 </tr>
             </thead>
             <tbody>
@@ -157,23 +164,23 @@
                         {% endif %}
                     </td>
                     <td>{{ org_name }}</td>
+                    <td class="align-right">{{ org_data['today_events'] }}</td>
+                    <td class="align-right">{{ org_data['today_attributes'] }}</td>                    
                     <td class="align-right">{{ org_data['period_events'] }}</td>
                     <td class="align-right">{{ org_data['period_attributes'] }}</td>
-                    <td class="align-right">{{ org_data['all_events'] }}</td>
-                    <td class="align-right">{{ org_data['all_attributes'] }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
         <div class="separator"></div>
 
-        <h2>Threat level and TLP distribution of events ({{ reporting_period }})</h2>
+        <h2>Threat level and TLP of events ({{ reporting_period }})</h2>
         <div class="charts">
             <div class="chart">
-                <img src="{{ threatlevel_bar_chart_path }}" alt="Threat Level Bar Chart">
+                <img src="{{ threatlevel_bar_chart_path }}" alt="Threat level">
             </div>
             <div class="chart">
-                <img src="{{ tlp_pie_chart_path }}" alt="TLP Pie Chart">
+                <img src="{{ tlp_pie_chart_path }}" alt="TLP">
             </div>
         </div>
         <div class="tables">
@@ -212,6 +219,7 @@
             </table>
         </div>
 
+        {% if print_event_details %}
         <h2>Event details</h2>
         <table class="table">
             <thead>
@@ -245,18 +253,19 @@
                 {% endfor %}
             </tbody>
         </table>
+        {% endif %}
     </div>
 
     <div class="container">
         <h2>Geo target information ({{ reporting_period }})</h2>
         <div class="chart">
-            <img src="{{ geo_targeting_map_path }}" alt="Geo Targeting Map">
+            <img src="{{ geo_targeting_map_path }}" alt="Geo targeting map">
         </div>
         <table class="table">
             <thead>
                 <tr>
                     <th>Country</th>
-                    <th>Target Count</th>
+                    <th>Count</th>
                 </tr>
             </thead>
             <tbody>
@@ -268,15 +277,15 @@
                 {% endfor %}
             </tbody>
         </table>
-        <h2>Sector Targeting ({{ reporting_period }})</h2>
+        <h2>Sector targeting ({{ reporting_period }})</h2>
         <div class="chart">
-            <img src="{{ sector_targeting_bar_chart_path }}" alt="Sector Targeting Chart">
+            <img src="{{ sector_targeting_bar_chart_path }}" alt="Sector targeting">
         </div>
         <table class="table">
             <thead>
                 <tr>
                     <th>Sector</th>
-                    <th>Target Count</th>
+                    <th>Count</th>
                 </tr>
             </thead>
             <tbody>

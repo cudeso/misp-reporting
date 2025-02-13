@@ -124,14 +124,26 @@ class ReportingData():
     def get_statistics_attributes(self):
         self.logger.debug("Started {}".format(inspect.currentframe().f_code.co_name))
         self.data["statistics-attributes"] = {}
+
+        # Data for reporting period
         response = self._get_data_for_reporting_period()
         for event in response:
             for attribute in event["Event"]["Attribute"]:
                 attribute_type = self._convert_attribute_category(attribute["type"])
                 if attribute_type in self.data["statistics-attributes"]:
-                    self.data["statistics-attributes"][attribute_type] += 1
+                    self.data["statistics-attributes"][attribute_type][0] += 1
                 else:
-                    self.data["statistics-attributes"][attribute_type] = 1
+                    self.data["statistics-attributes"][attribute_type] = [1,0]
+
+        # Data for today
+        response = self._get_data_for_today()
+        for event in response:
+            for attribute in event["Event"]["Attribute"]:
+                attribute_type = self._convert_attribute_category(attribute["type"])
+                if attribute_type in self.data["statistics-attributes"]:
+                    self.data["statistics-attributes"][attribute_type][1] += 1
+                else:
+                    self.data["statistics-attributes"][attribute_type] = [0,1]
 
     def get_statistics_keyorgs(self):
         self.logger.debug("Started {}".format(inspect.currentframe().f_code.co_name))
@@ -140,16 +152,14 @@ class ReportingData():
         org_uuid_list = list(self.key_organisations)
         if len(org_uuid_list) > 0:
             for orgc in org_uuid_list:
-                if self.config["reporting_keyorgs_allevents"]:
-                    self.data["statistics-keyorgs"][orgc] = {"reporting-period": {"events": 0, "attributes": 0},
-                                                             "all": {"events": 0, "attributes": 0}}
-                else:
-                    self.data["statistics-keyorgs"][orgc] = {"reporting-period": {"events": 0, "attributes": 0},
-                                                             "all": {"events": "-", "attributes": "-"}}
+                self.data["statistics-keyorgs"][orgc] = {"reporting-period": {"events": 0, "attributes": 0},
+                                                             "today": {"events": 0, "attributes": 0}}
 
             response = self._get_data_for_reporting_period()
             self._process_get_statistics_keyorgs(response, "reporting-period")
-            if self.config["reporting_keyorgs_allevents"]:
+            response = self._get_data_for_today()
+            self._process_get_statistics_keyorgs(response, "today")
+            '''if self.config["reporting_keyorgs_allevents"]:
                 tmp_reponse = []
                 current_page = 1
                 while True:
@@ -159,7 +169,7 @@ class ReportingData():
                     else:
                         break
                     current_page += 1
-                self._process_get_statistics_keyorgs(tmp_reponse, "all")
+                self._process_get_statistics_keyorgs(tmp_reponse, "all")'''
 
     def get_threatlevel(self):
         self.logger.debug("Started {}".format(inspect.currentframe().f_code.co_name))

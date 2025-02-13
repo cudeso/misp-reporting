@@ -36,6 +36,7 @@ class Reporting:
         self.events_trending_path = os.path.join(self.output_dir, "events_trending.png")
         self.attributes_trending_path = os.path.join(self.output_dir, "attributes_trending.png")
         self.attributes_type_bar_chart_path = os.path.join(self.output_dir, "attributes_type_bar_chart.png")
+        self.attributes_type_daily_bar_chart_path = os.path.join(self.output_dir, "attributes_type_daily_bar_chart.png")
         self.threatlevel_bar_chart_path = os.path.join(self.output_dir, "threatlevel_bar_chart.png")
         self.tlp_pie_chart_path = os.path.join(self.output_dir, "tlp_pie_chart.png")
         self.geo_targeting_map_path = os.path.join(self.output_dir, "geo_targeting_map.png")
@@ -275,6 +276,7 @@ class Reporting:
         for img in [self.events_trending_path,
                     self.attributes_trending_path,
                     self.attributes_type_bar_chart_path,
+                    self.attributes_type_daily_bar_chart_path,
                     self.threatlevel_bar_chart_path,
                     self.tlp_pie_chart_path,
                     self.geo_targeting_map_path,
@@ -327,11 +329,14 @@ class Reporting:
         if key in self.data:
             dataset = self.data[key]
             self.data_for_report[key] = dataset
-            self.create_bar_chart(self.data_for_report[key], self.attributes_type_bar_chart_path, "Attributes Type Distribution", full_width=True)
+            self.create_bar_chart(self.data_for_report[key], self.attributes_type_bar_chart_path, "Attributes type distribution ({})".format(self.config["reporting_period"]), full_width=False, value_index=0)
+            self.create_bar_chart(self.data_for_report[key], self.attributes_type_daily_bar_chart_path, "Attributes type distribution (24h)", full_width=False, value_index=1)
             self.data_for_report[key] = dict(sorted(dataset.items(), key=lambda item: item[1], reverse=True))
             self.logger.debug(" Created {}".format(self.attributes_type_bar_chart_path))
+            self.logger.debug(" Created {}".format(self.attributes_type_daily_bar_chart_path))
         else:
             self.attributes_type_bar_chart_path = self.noimage_path
+            self.attributes_type_daily_bar_chart_path = self.noimage_path            
             self.data_for_report[key] = {}
             self.logger.error(" Not found: {}".format(key))
 
@@ -341,7 +346,7 @@ class Reporting:
             dataset = self.data[key]
             updated_dataset = {self.threatlevel_key_mapping[key]: value for key, value in dataset.items()}
             self.data_for_report[key] = updated_dataset
-            self.create_bar_chart(self.data_for_report[key], self.threatlevel_bar_chart_path, "Threat Level Distribution")
+            self.create_bar_chart(self.data_for_report[key], self.threatlevel_bar_chart_path, "Threat level", value_index=-1)
             self.logger.debug(" Created {}".format(self.threatlevel_bar_chart_path))
         else:
             self.threatlevel_bar_chart_path = self.noimage_path
@@ -357,7 +362,7 @@ class Reporting:
                 if delkey not in self.tlp_ignore_graph:
                     updated_dataset[delkey] = dataset[delkey]
             self.data_for_report[key] = dataset
-            self.create_pie_chart(updated_dataset, self.tlp_pie_chart_path, "TLP Distribution", colors=["red", "orange", "green", "#d3d3d3", "#e8e6e6", "gray"])
+            self.create_pie_chart(updated_dataset, self.tlp_pie_chart_path, "TLP", colors=["red", "orange", "green", "#d3d3d3", "#e8e6e6", "gray"])
             self.logger.debug(" Created {}".format(self.tlp_pie_chart_path))
         else:
             self.tlp_pie_chart_path = self.noimage_path
@@ -378,12 +383,12 @@ class Reporting:
                             logo = self.key_organisations[uuid]["logo"]
                             period_events = dataset[uuid]["reporting-period"]["events"]
                             period_attributes = dataset[uuid]["reporting-period"]["attributes"]
-                            all_events = dataset[uuid]["all"]["events"]
-                            all_attributes = dataset[uuid]["all"]["attributes"]
+                            today_events = dataset[uuid]["today"]["events"]
+                            today_attributes = dataset[uuid]["today"]["attributes"]
                             updated_dataset[org_name] = {"logo": f"{logo}", "period_events": f"{period_events}",
                                                         "period_attributes": f"{period_attributes}",
-                                                        "all_events": f"{all_events}",
-                                                        "all_attributes": f"{all_attributes}"}
+                                                        "today_events": f"{today_events}",
+                                                        "today_attributes": f"{today_attributes}"}
                         else:
                             self.logger.error("Unable to get organisation info for {}".format(uuid))
                     except:
@@ -459,7 +464,7 @@ class Reporting:
             dataset = self.data[key]
             sorted_data = dict(sorted(dataset.items(), key=lambda item: item[1], reverse=True))
             self.data_for_report[key] = sorted_data
-            self.create_horizontal_bar_chart(self.data_for_report[key], self.sector_targeting_bar_chart_path, "Sector Targeting")
+            self.create_horizontal_bar_chart(self.data_for_report[key], self.sector_targeting_bar_chart_path, "Sector targeting")
             self.logger.debug(" Created {}".format(self.events_trending_path))
         else:
             self.sector_targeting_bar_chart_path = self.noimage_path
@@ -522,6 +527,7 @@ class Reporting:
             trending_events=self.data_for_report.get("trending-events", {}),
             trending_attributes=self.data_for_report.get("trending-attributes", {}),
             detailed_events=self.data_for_report["detailed_events"],
+            print_event_details=self.config["print_event_details"],
             attributes_type=self.data_for_report["statistics-attributes"],
             threatlevel=self.data_for_report["statistics-threatlevel"],
             tlp=self.data_for_report["statistics-tlp"],
@@ -535,6 +541,7 @@ class Reporting:
             events_trending_path=os.path.basename(self.events_trending_path),
             attributes_trending_path=os.path.basename(self.attributes_trending_path),
             attributes_type_bar_chart_path=os.path.basename(self.attributes_type_bar_chart_path),
+            attributes_type_daily_bar_chart_path=os.path.basename(self.attributes_type_daily_bar_chart_path),
             threatlevel_bar_chart_path=os.path.basename(self.threatlevel_bar_chart_path),
             tlp_pie_chart_path=os.path.basename(self.tlp_pie_chart_path),
             geo_targeting_map_path=os.path.basename(self.geo_targeting_map_path),
@@ -585,9 +592,12 @@ class Reporting:
         plt.savefig(output_path, dpi=100)
         plt.close()
 
-    def create_bar_chart(self, data, output_path, title, full_width=False):
+    def create_bar_chart(self, data, output_path, title, full_width=False, value_index=0):
         labels = list(data.keys())
-        values = list(data.values())
+        if value_index == -1:
+            values = list(data.values())
+        else:
+            values = [v[value_index] for v in data.values()]
 
         if all(v == 0 for v in values):
             values = [0.1] * len(values)  # Avoid fully empty chart
@@ -614,6 +624,7 @@ class Reporting:
         plt.tight_layout()
         plt.savefig(output_path, dpi=100)
         plt.close()
+
 
     def create_pie_chart(self, data, output_path, title, colors):
         labels = list(data.keys())
