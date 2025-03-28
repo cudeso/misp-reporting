@@ -83,3 +83,20 @@ I create the reports from a cronjob with this entry
 ![docs/demo5.jpg](docs/demo5.jpg)
 
 ![docs/demo6.jpg](docs/demo6.jpg)
+
+# Limit access to authenticated users only
+
+Edit `app/Controller/AttributesController.php`
+
+```
+    public function mispreporting($filename)
+        {
+            $filename = preg_replace("/[^a-zA-Z0-9\._]+/", "", $filename);
+            $filepath = APP . '/files/mispreporting/' . $filename;
+            if (file_exists($filepath)) {
+                $this->response->file($filepath, ['download' => false, 'name' => $filename]);
+                return $this->response;
+            }
+            throw new NotFoundException(__('Invalid file. Are you sure you\'re in the right signal chat?'));
+        }
+```
