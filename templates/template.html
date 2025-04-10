@@ -47,7 +47,7 @@
     </div>
 
     <div class="container">
-        <h1>Summary of published events</h1>
+        <h1>Summary of {{reporting_filter_timestamp}} events</h1>
         <table class="table">
             <thead>
                 <tr>
@@ -73,10 +73,10 @@
         <h2>Trending events and attributes</h2>
         <div class="charts">
             <div class="chart">
-                <img src="{{ events_trending_path }}" alt="Trending published events">
+                <img src="{{ events_trending_path }}" alt="Trending {{reporting_filter_timestamp}} events">
             </div>
             <div class="chart">
-                <img src="{{ attributes_trending_path }}" alt="Trending published attributes">
+                <img src="{{ attributes_trending_path }}" alt="Trending attributes in {{reporting_filter_timestamp}} events">
             </div>
         </div>
         <div class="tables">
@@ -147,7 +147,7 @@
         <table class="table">
             <thead>
                 <tr>
-                    <th>Logo</th>
+                    <th>&nbsp;</th>
                     <th>Organisation</th>
                     <th>Events (24h)</th>
                     <th>Attributes (24h)</th>
@@ -163,7 +163,7 @@
                         <img src="assets/{{ org_data.logo }}" alt="{{ org_name }}" style="height: 40px;">
                         {% endif %}
                     </td>
-                    <td>{{ org_name }}</td>
+                    <td class="align-left"><a href="{{ report_misp_server }}/events/index/searchorg:{{ org_data['org_uuid'] }}">{{ org_name }}</a></td>
                     <td class="align-right">{{ org_data['today_events'] }}</td>
                     <td class="align-right">{{ org_data['today_attributes'] }}</td>                    
                     <td class="align-right">{{ org_data['period_events'] }}</td>
@@ -271,8 +271,8 @@
             <tbody>
                 {% for country, count in target_geo.items() %}
                 <tr>
-                    <td>{{ country }}</td>
-                    <td>{{ count }}</td>
+                    <td class="align-left">{{ country }}</td>
+                    <td class="align-right">{{ count }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -291,8 +291,8 @@
             <tbody>
                 {% for sector, count in target_sector.items() %}
                 <tr>
-                    <td>{{ sector }}</td>
-                    <td>{{ count }}</td>
+                    <td class="align-left">{{ sector }}</td>
+                    <td class="align-right">{{ count }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -312,12 +312,14 @@
                 <tbody>
                     {% for actor, count in ttp_actors.items() %}
                     <tr>
-                        <td>{{ actor }}</td>
-                        <td>{{ count }}</td>
+                        <td class="align-left">{{ actor }}</td>
+                        <td class="align-right">{{ count }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
+        </div>
+        <div class="tables">
             <table class="table">
                 <thead>
                     <tr>
@@ -328,8 +330,8 @@
                 <tbody>
                     {% for pattern, count in ttp_pattern.items() %}
                     <tr>
-                        <td>{{ pattern }}</td>
-                        <td>{{ count }}</td>
+                        <td class="align-left">{{ pattern }}</td>
+                        <td class="align-right">{{ count }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -352,10 +354,10 @@
                 <tbody>
                     {% for cve, detail in vulnerabilities.items() %}
                     <tr>
-                        <td>{{ cve }}</td>
+                        <td class="align-left"><a href="{{ vulnerability_lookup_url}}/{{ cve }}">{{ cve }}</a></td>
                         <td style="text-align:left">{{ detail.summary }}</td>
                         <td>{{ detail.cvss3 }}</td>
-                        <td>{{ detail.count }}</td>
+                        <td class="align-right">{{ detail.count }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>

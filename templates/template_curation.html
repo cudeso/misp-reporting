@@ -22,7 +22,7 @@
             <a href="misp_curation.html" class="curation">Curation Overview</a>
             <a href="misp_infrastructure.html" class="infrastructure">Infrastructure Monitoring</a>
         </div>
-        <h1>Summary</h1>
+        <h1>Curation summary</h1>
         <table class="table">
             <thead>
                 <tr>
@@ -32,6 +32,11 @@
                 </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td>Last 24h</td>
+                    <td class="align-right">{{ curation_today_complete_count }}</td>
+                    <td class="align-right">{{ curation_today_incomplete_count }}</td>
+                </tr>                
                 <tr>
                     <td>{{ summary.period }}</td>
                     <td class="align-right">{{ curation_complete_count }}</td>

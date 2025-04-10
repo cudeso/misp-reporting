@@ -75,6 +75,9 @@ class ReportingData():
 
 
     def get_trending_events_attributes(self):
+        # Get the trends data
+        #   - First the data for the reporting period
+        #   - Then the data for the last reporting_trending_count (fe. 6) periods
         self.logger.debug("Started {}".format(inspect.currentframe().f_code.co_name))
 
         self.data["trending-events"] = {}
@@ -96,14 +99,15 @@ class ReportingData():
         while self.config["reporting_trending_count"] > count:
             start_period = days * count
             end_period = days * (count + 1)
-            timestamp_filter = ["{}d".format(start_period), "{}d".format(end_period)]
+            #timestamp_filter = ["{}d".format(start_period), "{}d".format(end_period)]
             self.logger.debug(" Get {} - {}".format(start_period, end_period))
 
             current_page = 1
             tmp_len = 0
             response = []
             while True:
-                tmp_response = self.misp.search("events", limit=self.config["misp_page_size"], page=current_page, published=True, publish_timestamp=["{}d".format(start_period), "{}d".format(end_period)], tags=self.config["reporting_filter"])
+                filter_params = self._build_misp_filter(current_page, self.config["reporting_filter_published"], ["{}d".format(start_period), "{}d".format(end_period)])                
+                tmp_response = self.misp.search("events", **filter_params)
                 if len(tmp_response) > 0:
                     tmp_len = tmp_len + len(tmp_response)
                     response += tmp_response
@@ -380,12 +384,28 @@ class ReportingData():
                 self.data["statistics-keyorgs"][orgc][period]["events"] += 1
                 self.data["statistics-keyorgs"][orgc][period]["attributes"] += attributesqt
 
+    def _build_misp_filter(self, current_page, published, date_filter):
+        filter_params = {
+            "limit": self.config["misp_page_size"],
+            "page": current_page,
+            "published": published,
+            "tags": self.config["reporting_filter"]
+        }
+        if self.config["reporting_filter_timestamp"] == "timestamp":
+            filter_params["timestamp"] = date_filter
+        elif self.config["reporting_filter_timestamp"] == "published":
+            filter_params["publish_timestamp"] = date_filter
+        else:   # default to published
+            filter_params["publish_timestamp"] = date_filter
+        return filter_params
+    
     def _get_data_for_reporting_period(self, published=True):
         response = []
         if not self.data_for_reporting_period:
             current_page = 1
             while True:
-                tmp_reponse = self.misp.search("events", limit=self.config["misp_page_size"], page=current_page, published=published, publish_timestamp=self.config["reporting_period"], tags=self.config["reporting_filter"])
+                filter_params = self._build_misp_filter(current_page, self.config["reporting_filter_published"], self.config["reporting_period"])
+                tmp_reponse = self.misp.search("events", **filter_params)
                 if len(tmp_reponse) > 0:
                     response = response + tmp_reponse
                 else:
@@ -399,7 +419,8 @@ class ReportingData():
         if not self.data_for_today:
             current_page = 1
             while True:
-                tmp_reponse = self.misp.search("events", limit=self.config["misp_page_size"], page=current_page, published=published, publish_timestamp="1d", tags=self.config["reporting_filter"])
+                filter_params = self._build_misp_filter(current_page, self.config["reporting_filter_published"], "1d")
+                tmp_reponse = self.misp.search("events", **filter_params)
                 if len(tmp_reponse) > 0:
                     response = response + tmp_reponse
                 else:

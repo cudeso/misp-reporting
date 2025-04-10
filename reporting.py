@@ -35,14 +35,14 @@ def main(config):
     data.get_ttp()
     data.get_vulnerabilities()
 
-    #data.get_curation()
+    data.get_curation()
 
     #data.get_infrastructure()
 
     reporting = Reporting(config, logger, data.data)
     reporting.write_index()
     reporting.render_report()
-    #reporting.render_curation_report()
+    reporting.render_curation_report()
     #reporting.render_infrastructure()
 
     logger.info("End ".format(config["logname"]))

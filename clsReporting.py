@@ -201,16 +201,20 @@ class Reporting:
         template = Template(html_template)
         html_content = template.render(
             css=css_content,
-            title="MISP Curation Summary",            
+            title="MISP Curation summary",            
             logo=self.config["logo"],
             report_date=self.report_date,
             report_timestamp=datetime.now().strftime('%Y%m%d %H%M%S'),
             report_misp_server=self.report_misp_server,
             summary=self.data_for_report["statistics"],
+            curation_today_incomplete_count=0,
+            curation_today_complete_count=0,
             curation_complete_count=curation_complete_count,
             curation_incomplete_count=curation_incomplete_count,
+
             curation_complete=curation_complete_events,
             curation_incomplete=curation_incomplete_events,
+
             curation_complete_org=self.data_for_report["curation_orgs_complete"],
             curation_incomplete_org=self.data_for_report["curation_orgs_incomplete"],
 
@@ -385,7 +389,7 @@ class Reporting:
                             period_attributes = dataset[uuid]["reporting-period"]["attributes"]
                             today_events = dataset[uuid]["today"]["events"]
                             today_attributes = dataset[uuid]["today"]["attributes"]
-                            updated_dataset[org_name] = {"logo": f"{logo}", "period_events": f"{period_events}",
+                            updated_dataset[org_name] = {"logo": f"{logo}", "org_uuid": f"{uuid}", "period_events": f"{period_events}",
                                                         "period_attributes": f"{period_attributes}",
                                                         "today_events": f"{today_events}",
                                                         "today_attributes": f"{today_attributes}"}
@@ -408,7 +412,7 @@ class Reporting:
             current_date = datetime.now()
             past_date = current_date - timedelta(days=days)
             reporting_period = self.config["reporting_period"]
-            updated_dataset["period"] = f"Reporting until {past_date.strftime('%Y-%m-%d')}"
+            updated_dataset["period"] = f"Reporting last 24h and between today and {past_date.strftime('%Y-%m-%d')}"
             if self.config["reporting_filter"] is not None:
                 updated_dataset["period"] = "{}<br />MISP filters: {}".format(updated_dataset["period"], self.config["reporting_filter"])
             if "trending-events" in self.data:
@@ -450,7 +454,10 @@ class Reporting:
         if key in self.data and len(self.data[key]) > 0:
             dataset = self.data[key]
             sorted_data = dict(sorted(dataset.items(), key=lambda item: item[1], reverse=True))
-            self.data_for_report[key] = sorted_data
+            if self.config["filter_geo_count"] > 0:
+                self.data_for_report[key] = dict(list(sorted_data.items())[:self.config["filter_geo_count"]])
+            else:
+                self.data_for_report[key] = sorted_data
             self.create_geo_targeting_map(self.data_for_report[key], self.geo_targeting_map_path)
             self.logger.debug(" Created {}".format(self.events_trending_path))
         else:
@@ -463,6 +470,10 @@ class Reporting:
         if key in self.data and len(self.data[key]) > 0:
             dataset = self.data[key]
             sorted_data = dict(sorted(dataset.items(), key=lambda item: item[1], reverse=True))
+            if self.config["filter_sector_count"] > 0:
+                self.data_for_report[key] = dict(list(sorted_data.items())[:self.config["filter_sector_count"]])
+            else:
+                self.data_for_report[key] = sorted_data            
             self.data_for_report[key] = sorted_data
             self.create_horizontal_bar_chart(self.data_for_report[key], self.sector_targeting_bar_chart_path, "Sector targeting")
             self.logger.debug(" Created {}".format(self.events_trending_path))
@@ -506,6 +517,12 @@ class Reporting:
             self.data_for_report[key] = {}
             self.logger.error(" Not found: {}".format(key))
 
+        # ############### Labels
+        if self.config["reporting_filter_timestamp"] == "timestamp":
+            reporting_filter_timestamp = "recently changed"
+        else:
+            reporting_filter_timestamp = "published"
+
         template_css_file = self.template_css
         with open(template_css_file, "r") as f:
             css_content = f.read()
@@ -546,6 +563,9 @@ class Reporting:
             tlp_pie_chart_path=os.path.basename(self.tlp_pie_chart_path),
             geo_targeting_map_path=os.path.basename(self.geo_targeting_map_path),
             sector_targeting_bar_chart_path=os.path.basename(self.sector_targeting_bar_chart_path),
+
+            reporting_filter_timestamp=reporting_filter_timestamp,
+            vulnerability_lookup_url=self.config["vulnerability_lookup"],
         )
 
         output_html_path = os.path.join(self.output_dir, "misp_summary.html")

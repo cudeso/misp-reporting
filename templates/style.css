@@ -104,6 +104,18 @@ th {
 td.align-right {
     text-align: right;
 }
+td.align-left {
+    text-align: left;
+}
+.table td a {
+    color: #FF6600;
+    text-decoration: none;
+}
+
+.table td a:hover {
+    color: #e65c00;
+    text-decoration: underline;
+}
 .separator {
     margin: 30px 0;
     border-top: 2px solid #FF6600;
