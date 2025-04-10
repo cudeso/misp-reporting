@@ -49,10 +49,12 @@ config = {
         "filter_ttp_pattern": ["misp-galaxy:mitre-attack-pattern"],
         "reporting_filter_timestamp": "published",
         "reporting_filter_published": True,
-        "vulnerability_lookup": "https://vulnerability.circl.lu/vuln/
+        "vulnerability_lookup": "https://vulnerability.circl.lu/vuln/",
 
         "filter_geo_count": 10,
         "filter_sector_count": 10,
         "filter_ttp_actors_count": 15,
-        "filter_ttp_pattern_count": 15,        
+        "filter_ttp_pattern_count": 15,      
+        "filter_attribute_type_ids": True,
+
         }

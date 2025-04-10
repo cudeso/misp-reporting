@@ -53,19 +53,22 @@
                 <tr>
                     <th>Summary</th>
                     <th>Events (24h)</th>
-                    <th>Attributes (24h)</th>                    
+                    <th>Attributes (24h)</th>
+                    <th>Attr to_ids (24h)</th>
                     <th>Events ({{ reporting_period }})</th>
                     <th>Attributes ({{ reporting_period }})</th>
-
+                    <th>Attr to_ids ({{ reporting_period }})</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
                     <td>{{ summary.period }}</td>
                     <td class="align-right"><strong>{{ summary.today_events }}</strong></td>
-                    <td class="align-right"><strong>{{ summary.today_attributes }}</strong></td>                    
+                    <td class="align-right"><strong>{{ summary.today_attributes }}</strong></td>
+                    <td class="align-right"><strong>{{ summary.today_attributes_ids }}</strong></td>
                     <td class="align-right">{{ summary.period_events }}</td>
                     <td class="align-right">{{ summary.period_attributes }}</td>
+                    <td class="align-right">{{ summary.period_attributes_ids }}</td>                    
                 </tr>
             </tbody>
         </table>
@@ -101,13 +104,15 @@
                     <tr>
                         <th>Period</th>
                         <th>Attributes</th>
+                        <th>Attr to_ids</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for month, value in trending_attributes.items() %}
                     <tr>
                         <td>{{ month }}</td>
-                        <td>{{ value }}</td>
+                        <td>{{ value[0] }}</td>
+                        <td>{{ value[1] }}</td>            
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -117,6 +122,7 @@
         <div class="separator"></div>
         
         <h2>Attributes type distribution</h2>
+        <i>{{ attributes_with_ids_or_not}}</i>
         <div class="charts">
             <div class="chart">
                 <img src="{{ attributes_type_daily_bar_chart_path }}" alt="Attributes type distribution">
@@ -151,8 +157,10 @@
                     <th>Organisation</th>
                     <th>Events (24h)</th>
                     <th>Attributes (24h)</th>
+                    <th>Attr to_ids (24h)</th>
                     <th>Events ({{ reporting_period }})</th>
                     <th>Attributes ({{ reporting_period }})</th>
+                    <th>Attr to_ids ({{ reporting_period }})</th>
                 </tr>
             </thead>
             <tbody>
@@ -165,9 +173,11 @@
                     </td>
                     <td class="align-left"><a href="{{ report_misp_server }}/events/index/searchorg:{{ org_data['org_uuid'] }}">{{ org_name }}</a></td>
                     <td class="align-right">{{ org_data['today_events'] }}</td>
-                    <td class="align-right">{{ org_data['today_attributes'] }}</td>                    
+                    <td class="align-right">{{ org_data['today_attributes'] }}</td>
+                    <td class="align-right">{{ org_data['today_attributes_ids'] }}</td>
                     <td class="align-right">{{ org_data['period_events'] }}</td>
                     <td class="align-right">{{ org_data['period_attributes'] }}</td>
+                    <td class="align-right">{{ org_data['period_attributes_ids'] }}</td>
                 </tr>
                 {% endfor %}
             </tbody>

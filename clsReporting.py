@@ -89,8 +89,8 @@ class Reporting:
         template = Template(html_template)
         html_content = template.render(
             css=css_content,
-            title="MISP Infrastructure Summary",            
-            logo=self.config["logo"],            
+            title="MISP Infrastructure summary",
+            logo=self.config["logo"],
             report_date=self.report_date,
             report_timestamp=datetime.now().strftime('%Y%m%d %H%M%S'),
             report_misp_server=self.report_misp_server,
@@ -193,7 +193,7 @@ class Reporting:
         with open(template_css_file, "r") as f:
             css_content = f.read()
 
-        template_file = self.template_curation_html  
+        template_file = self.template_curation_html
         with open(template_file, "r") as f:
             html_template = f.read()
 
@@ -201,7 +201,7 @@ class Reporting:
         template = Template(html_template)
         html_content = template.render(
             css=css_content,
-            title="MISP Curation summary",            
+            title="MISP Curation summary",
             logo=self.config["logo"],
             report_date=self.report_date,
             report_timestamp=datetime.now().strftime('%Y%m%d %H%M%S'),
@@ -301,7 +301,7 @@ class Reporting:
             for start, end in zip(sorted_keys[1:], sorted_keys):
                 updated_dataset[f"{end}d-{start}d"] = dataset[start]
             self.data_for_report[key] = updated_dataset
-            self.create_trending_graph(self.data_for_report[key], self.events_trending_path, "Trending published events")
+            self.create_trending_graph(self.data_for_report[key], self.events_trending_path, "Trending events")
             self.logger.debug(" Created {}".format(self.events_trending_path))
         else:
             self.events_trending_path = self.noimage_path
@@ -312,16 +312,18 @@ class Reporting:
         key = "trending-attributes"
         if key in self.data:
             dataset = self.data[key]
+            dataset2 = self.data["trending-attributes_ids"]
+
             days = int(self.config["reporting_period"].strip("d"))
             sorted_keys = sorted(dataset.keys(), reverse=True)
             updated_dataset = {}
             highest_key = sorted_keys[0]
-            updated_dataset[f"{highest_key + days}d-{highest_key}d"] = dataset[highest_key]
+            updated_dataset[f"{highest_key + days}d-{highest_key}d"] = [dataset[highest_key], dataset2[highest_key]]
             for start, end in zip(sorted_keys[1:], sorted_keys):
-                updated_dataset[f"{end}d-{start}d"] = dataset[start]
+                updated_dataset[f"{end}d-{start}d"] = [dataset[start], dataset2[start]]
 
             self.data_for_report[key] = updated_dataset
-            self.create_trending_graph(self.data_for_report[key], self.attributes_trending_path, "Trending published attributes")
+            self.create_trending_graph_double(self.data_for_report[key], self.attributes_trending_path, "Trending attributes", "Attributes", "With to_ids")
             self.logger.debug(" Created {}".format(self.attributes_trending_path))
         else:
             self.attributes_trending_path = self.noimage_path
@@ -340,7 +342,7 @@ class Reporting:
             self.logger.debug(" Created {}".format(self.attributes_type_daily_bar_chart_path))
         else:
             self.attributes_type_bar_chart_path = self.noimage_path
-            self.attributes_type_daily_bar_chart_path = self.noimage_path            
+            self.attributes_type_daily_bar_chart_path = self.noimage_path
             self.data_for_report[key] = {}
             self.logger.error(" Not found: {}".format(key))
 
@@ -387,12 +389,16 @@ class Reporting:
                             logo = self.key_organisations[uuid]["logo"]
                             period_events = dataset[uuid]["reporting-period"]["events"]
                             period_attributes = dataset[uuid]["reporting-period"]["attributes"]
+                            period_attributes_ids = dataset[uuid]["reporting-period"]["attributes_ids"]                            
                             today_events = dataset[uuid]["today"]["events"]
                             today_attributes = dataset[uuid]["today"]["attributes"]
+                            today_attributes_ids = dataset[uuid]["today"]["attributes_ids"]
                             updated_dataset[org_name] = {"logo": f"{logo}", "org_uuid": f"{uuid}", "period_events": f"{period_events}",
                                                         "period_attributes": f"{period_attributes}",
+                                                        "period_attributes_ids": f"{period_attributes_ids}",
                                                         "today_events": f"{today_events}",
-                                                        "today_attributes": f"{today_attributes}"}
+                                                        "today_attributes": f"{today_attributes}",
+                                                        "today_attributes_ids": f"{today_attributes_ids}"}
                         else:
                             self.logger.error("Unable to get organisation info for {}".format(uuid))
                     except:
@@ -418,15 +424,19 @@ class Reporting:
             if "trending-events" in self.data:
                 updated_dataset["period_events"] = self.data["trending-events"][0]
                 updated_dataset["period_attributes"] = self.data["trending-attributes"][0]
+                updated_dataset["period_attributes_ids"] = self.data["trending-attributes_ids"][0]
             else:
                 updated_dataset["period_events"] = "No data"
                 updated_dataset["period_attributes"] = "No data"
+                updated_dataset["period_attributes_ids"] = "No data"
             if "today-events" in self.data:
                 updated_dataset["today_events"] = self.data["today-events"]
                 updated_dataset["today_attributes"] = self.data["today-attributes"]
+                updated_dataset["today_attributes_ids"] = self.data["today-attributes_ids"]
             else:
                 updated_dataset["today_events"] = "No data"
                 updated_dataset["today_attributes"] = "No data"
+                updated_dataset["today_attributes_ids"] = "No data"
             updated_dataset["events"] = dataset["event_count"]
             updated_dataset["attributes"] = dataset["attribute_count"]
             updated_dataset["correlations"] = dataset["correlation_count"]
@@ -473,8 +483,7 @@ class Reporting:
             if self.config["filter_sector_count"] > 0:
                 self.data_for_report[key] = dict(list(sorted_data.items())[:self.config["filter_sector_count"]])
             else:
-                self.data_for_report[key] = sorted_data            
-            self.data_for_report[key] = sorted_data
+                self.data_for_report[key] = sorted_data
             self.create_horizontal_bar_chart(self.data_for_report[key], self.sector_targeting_bar_chart_path, "Sector targeting")
             self.logger.debug(" Created {}".format(self.events_trending_path))
         else:
@@ -487,7 +496,10 @@ class Reporting:
         if key in self.data and len(self.data[key]) > 0:
             dataset = self.data[key]
             sorted_data = dict(sorted(dataset.items(), key=lambda item: item[1], reverse=True))
-            self.data_for_report[key] = sorted_data
+            if self.config["filter_ttp_pattern_count"] > 0:
+                self.data_for_report[key] = dict(list(sorted_data.items())[:self.config["filter_ttp_pattern_count"]])
+            else:
+                self.data_for_report[key] = sorted_data
             self.logger.debug(" Created {}".format(key))
         else:
             self.data_for_report[key] = {}
@@ -499,7 +511,10 @@ class Reporting:
             dataset = self.data[key]
             self.data_for_report[key] = dataset
             sorted_data = dict(sorted(dataset.items(), key=lambda item: item[1], reverse=True))
-            self.data_for_report[key] = sorted_data
+            if self.config["filter_ttp_actors_count"] > 0:
+                self.data_for_report[key] = dict(list(sorted_data.items())[:self.config["filter_ttp_actors_count"]])
+            else:
+                self.data_for_report[key] = sorted_data
             self.logger.debug(" Created {}".format(key))
         else:
             self.data_for_report[key] = {}
@@ -523,6 +538,11 @@ class Reporting:
         else:
             reporting_filter_timestamp = "published"
 
+        if self.config["filter_attribute_type_ids"] == True:
+            attributes_with_ids_or_not = "Only attributes where to_ids is set to true"
+        else:
+            attributes_with_ids_or_not = "All attributes, regardless of the to_ids flag"
+
         template_css_file = self.template_css
         with open(template_css_file, "r") as f:
             css_content = f.read()
@@ -535,7 +555,7 @@ class Reporting:
         html_content = template.render(
             css=css_content,
             title="MISP Summary",
-            logo=self.config["logo"],            
+            logo=self.config["logo"],
             report_date=self.report_date,
             report_timestamp=datetime.now().strftime('%Y%m%d %H%M%S'),
             reporting_period=self.config["reporting_period"],
@@ -566,6 +586,7 @@ class Reporting:
 
             reporting_filter_timestamp=reporting_filter_timestamp,
             vulnerability_lookup_url=self.config["vulnerability_lookup"],
+            attributes_with_ids_or_not=attributes_with_ids_or_not,
         )
 
         output_html_path = os.path.join(self.output_dir, "misp_summary.html")
@@ -645,7 +666,6 @@ class Reporting:
         plt.savefig(output_path, dpi=100)
         plt.close()
 
-
     def create_pie_chart(self, data, output_path, title, colors):
         labels = list(data.keys())
         sizes = list(data.values())
@@ -665,7 +685,7 @@ class Reporting:
             plt.tight_layout()
             plt.savefig(output_path, dpi=100)
             plt.close()
-        else:        
+        else:
             plt.figure(figsize=(4, 3))
             plt.pie(
                 sizes,
@@ -695,3 +715,26 @@ class Reporting:
         plt.tight_layout()
         plt.savefig(output_path, dpi=100)
         plt.close()
+
+    def create_trending_graph_double(self, data, output_path, title, label1, label2):
+        months = list(data.keys())
+        pairs = list(data.values())
+
+        # Separate out the first/second data points in each pair
+        first_values = [p[0] for p in pairs]
+        second_values = [p[1] for p in pairs]
+
+        plt.figure(figsize=(4, 3))
+        plt.plot(months, first_values, marker="o", color="#ffcc00", label=label1)
+        plt.plot(months, second_values, marker="o", color="#ff1e00", label=label2)
+
+        plt.title(title, fontsize=10)
+        plt.ylabel("Count", fontsize=8)
+        plt.xticks(fontsize=8, rotation=45)
+        plt.yticks(fontsize=8)
+        plt.grid(True, linestyle='--', alpha=0.7)
+        plt.legend(fontsize=8)
+        plt.tight_layout()
+        plt.savefig(output_path, dpi=100)
+        plt.close()
+

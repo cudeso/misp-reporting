@@ -64,15 +64,25 @@ class ReportingData():
 
         self.data["today-events"] = {}
         self.data["today-attributes"] = {}
+        self.data["today-attributes_ids"] = {}
+
         response = self._get_data_for_today()
         self.data["today-events"] = len(response)
+
         attributesqt = 0
+        attributesqt_ids = 0
         for event in response:
             attributesqt += len(event["Event"]["Attribute"])
+            for attr in event["Event"]["Attribute"]:
+                if attr["to_ids"] == 1:
+                    attributesqt_ids += 1
             for misp_object in event["Event"]["Object"]:
                 attributesqt += len(misp_object["Attribute"])
+                for attr in misp_object["Attribute"]:
+                    if attr["to_ids"] == 1:
+                        attributesqt_ids += 1
         self.data["today-attributes"] = attributesqt
-
+        self.data["today-attributes_ids"] = attributesqt_ids
 
     def get_trending_events_attributes(self):
         # Get the trends data
@@ -82,6 +92,7 @@ class ReportingData():
 
         self.data["trending-events"] = {}
         self.data["trending-attributes"] = {}
+        self.data["trending-attributes_ids"] = {}        
 
         days = int(''.join(filter(str.isdigit, self.config["reporting_period"])))
         self.logger.debug(" Get {}".format(days))
@@ -89,11 +100,19 @@ class ReportingData():
         self.data["trending-events"][0] = len(response)
 
         attributesqt = 0
+        attributesqt_ids = 0
         for event in response:
             attributesqt += len(event["Event"]["Attribute"])
+            for attr in event["Event"]["Attribute"]:
+                if attr["to_ids"] == 1:
+                    attributesqt_ids += 1
             for misp_object in event["Event"]["Object"]:
                 attributesqt += len(misp_object["Attribute"])
+                for attr in misp_object["Attribute"]:
+                    if attr["to_ids"] == 1:
+                        attributesqt_ids += 1
         self.data["trending-attributes"][0] = attributesqt
+        self.data["trending-attributes_ids"][0] = attributesqt_ids        
 
         count = 1
         while self.config["reporting_trending_count"] > count:
@@ -106,7 +125,7 @@ class ReportingData():
             tmp_len = 0
             response = []
             while True:
-                filter_params = self._build_misp_filter(current_page, self.config["reporting_filter_published"], ["{}d".format(start_period), "{}d".format(end_period)])                
+                filter_params = self._build_misp_filter(current_page, self.config["reporting_filter_published"], ["{}d".format(start_period), "{}d".format(end_period)])
                 tmp_response = self.misp.search("events", **filter_params)
                 if len(tmp_response) > 0:
                     tmp_len = tmp_len + len(tmp_response)
@@ -117,11 +136,19 @@ class ReportingData():
             self.data["trending-events"][start_period] = tmp_len
 
             attributesqt = 0
+            attributesqt_ids = 0            
             for event in response:
                 attributesqt += len(event["Event"]["Attribute"])
+                for attr in event["Event"]["Attribute"]:
+                    if attr["to_ids"] == 1:
+                        attributesqt_ids += 1
                 for misp_object in event["Event"]["Object"]:
                     attributesqt += len(misp_object["Attribute"])
+                    for attr in misp_object["Attribute"]:
+                        if attr["to_ids"] == 1:
+                            attributesqt_ids += 1
             self.data["trending-attributes"][start_period] = attributesqt
+            self.data["trending-attributes_ids"][start_period] = attributesqt_ids
 
             count += 1
 
@@ -129,25 +156,31 @@ class ReportingData():
         self.logger.debug("Started {}".format(inspect.currentframe().f_code.co_name))
         self.data["statistics-attributes"] = {}
 
-        # Data for reporting period
-        response = self._get_data_for_reporting_period()
-        for event in response:
-            for attribute in event["Event"]["Attribute"]:
-                attribute_type = self._convert_attribute_category(attribute["type"])
-                if attribute_type in self.data["statistics-attributes"]:
-                    self.data["statistics-attributes"][attribute_type][0] += 1
-                else:
-                    self.data["statistics-attributes"][attribute_type] = [1,0]
+        response_reporting_period = self._get_data_for_reporting_period()
+        self._process_attribute_counts(response_reporting_period, index=0)
+        response_today = self._get_data_for_today()
+        self._process_attribute_counts(response_today, index=1)
 
-        # Data for today
-        response = self._get_data_for_today()
-        for event in response:
+    def _process_attribute_counts(self, events, index):
+        for event in events:
             for attribute in event["Event"]["Attribute"]:
+                if self.config["filter_attribute_type_ids"] and attribute["to_ids"] == 0:
+                    continue
+
                 attribute_type = self._convert_attribute_category(attribute["type"])
-                if attribute_type in self.data["statistics-attributes"]:
-                    self.data["statistics-attributes"][attribute_type][1] += 1
-                else:
-                    self.data["statistics-attributes"][attribute_type] = [0,1]
+                if attribute_type not in self.data["statistics-attributes"]:
+                    self.data["statistics-attributes"][attribute_type] = [0, 0]
+                self.data["statistics-attributes"][attribute_type][index] += 1
+
+            for misp_object in event["Event"]["Object"]:
+                for attr in misp_object["Attribute"]:
+                    if self.config["filter_attribute_type_ids"] and attr["to_ids"] == 0:
+                        continue
+
+                    attribute_type = self._convert_attribute_category(attr["type"])
+                    if attribute_type not in self.data["statistics-attributes"]:
+                        self.data["statistics-attributes"][attribute_type] = [0, 0]
+                    self.data["statistics-attributes"][attribute_type][index] += 1
 
     def get_statistics_keyorgs(self):
         self.logger.debug("Started {}".format(inspect.currentframe().f_code.co_name))
@@ -156,8 +189,8 @@ class ReportingData():
         org_uuid_list = list(self.key_organisations)
         if len(org_uuid_list) > 0:
             for orgc in org_uuid_list:
-                self.data["statistics-keyorgs"][orgc] = {"reporting-period": {"events": 0, "attributes": 0},
-                                                             "today": {"events": 0, "attributes": 0}}
+                self.data["statistics-keyorgs"][orgc] = {"reporting-period": {"events": 0, "attributes": 0, "attributes_ids": 0},
+                                                             "today": {"events": 0, "attributes": 0, "attributes_ids": 0}}
 
             response = self._get_data_for_reporting_period()
             self._process_get_statistics_keyorgs(response, "reporting-period")
@@ -374,15 +407,25 @@ class ReportingData():
         self.logger.debug("Started {}".format(inspect.currentframe().f_code.co_name))
 
     def _process_get_statistics_keyorgs(self, response, period):
+        attributesqt = 0
+        attributesqt_ids = 0
         for event in response:
             orgc = event["Event"]["Orgc"]["uuid"]
             if self.key_organisations.get(orgc, False):
                 attributesqt = len(event["Event"]["Attribute"])
+                for attr in event["Event"]["Attribute"]:
+                    if attr["to_ids"] == 1:
+                        attributesqt_ids += 1
+
                 for misp_object in event["Event"]["Object"]:
                     attributesqt += len(misp_object["Attribute"])
+                    for attr in misp_object["Attribute"]:
+                        if attr["to_ids"] == 1:
+                            attributesqt_ids += 1
 
                 self.data["statistics-keyorgs"][orgc][period]["events"] += 1
                 self.data["statistics-keyorgs"][orgc][period]["attributes"] += attributesqt
+                self.data["statistics-keyorgs"][orgc][period]["attributes_ids"] += attributesqt_ids                
 
     def _build_misp_filter(self, current_page, published, date_filter):
         filter_params = {
@@ -398,7 +441,7 @@ class ReportingData():
         else:   # default to published
             filter_params["publish_timestamp"] = date_filter
         return filter_params
-    
+
     def _get_data_for_reporting_period(self, published=True):
         response = []
         if not self.data_for_reporting_period:
@@ -413,7 +456,7 @@ class ReportingData():
                 current_page += 1
             self.data_for_reporting_period = response
         return self.data_for_reporting_period
-    
+
     def _get_data_for_today(self, published=True):
         response = []
         if not self.data_for_today:
