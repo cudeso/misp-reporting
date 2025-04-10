@@ -22,6 +22,11 @@
             <a href="misp_curation.html" class="curation">Curation Overview</a>
             <a href="misp_infrastructure.html" class="infrastructure">Infrastructure Monitoring</a>
         </div>
+        <p>Reporting period: Last <strong>{{ reporting_period }}</strong> {{ summary.period }}<br /></strong></p>
+        <p>Published at {{ report_timestamp_hm }}</p>
+    </div>
+
+    <div class="container">
         <h1>Curation summary</h1>
         <table class="table">
             <thead>
@@ -33,12 +38,12 @@
             </thead>
             <tbody>
                 <tr>
-                    <td>Reporting for the last 24h</td>
-                    <td class="align-right">{{ curation_today_complete_count }}</td>
-                    <td class="align-right">{{ curation_today_incomplete_count }}</td>
+                    <td>Last 24h</td>
+                    <td class="align-right">{{ curation_complete_today_count }}</td>
+                    <td class="align-right">{{ curation_incomplete_today_count }}</td>
                 </tr>                
                 <tr>
-                    <td>{{ summary.period }}</td>
+                    <td>Last {{ reporting_period }}</td>
                     <td class="align-right">{{ curation_complete_count }}</td>
                     <td class="align-right">{{ curation_incomplete_count }}</td>
                 </tr>
@@ -85,26 +90,52 @@
                 </tbody>
             </table>
         </div>
+    </div>
 
-        <h2>Curated events</h2>
+    <div class="container">
+        <h2>Events waiting for curation - Threat level high</h2>
         <table class="table">
             <thead>
                 <tr>
                     <th>ID</th>                    
                     <th>Date</th>
                     <th>Organisation</th>
-                    <th>Info</th>
-                    <th>Indicators</th>
+                    <th>Event title</th>
+                    <th>Attributes</th>
                 </tr>
             </thead>
             <tbody>
-                {% for event in curation_complete %}
+                {% for event in curation_incomplete_high %}
                 <tr>
-                    <td>{{ event.id }}</td>                    
+                    <td><a href="{{ report_misp_server }}/events/view/{{ event.id }}">{{ event.id }}</a></td>                    
                     <td>{{ event.date }}</td>
-                    <td>{{ event.org }}</td>
-                    <td>{{ event.info }}</td>
-                    <td>{{ event.indicators }}</td>               
+                    <td class="align-left">{{ event.org }}</td>
+                    <td class="align-left">{{ event.info }}</td>
+                    <td class="align-right">{{ event.indicators }}</td>               
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h2>Events waiting for curation - Admiralty scale : Source Reliability: Completely reliable (A)</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>                    
+                    <th>Date</th>
+                    <th>Organisation</th>
+                    <th>Event title</th>
+                    <th>Attributes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in curation_incomplete_adm_high %}
+                <tr>
+                    <td><a href="{{ report_misp_server }}/events/view/{{ event.id }}">{{ event.id }}</a></td>                    
+                    <td>{{ event.date }}</td>
+                    <td class="align-left">{{ event.org }}</td>
+                    <td class="align-left">{{ event.info }}</td>
+                    <td class="align-right">{{ event.indicators }}</td>               
                 </tr>
                 {% endfor %}
             </tbody>
@@ -117,22 +148,47 @@
                     <th>ID</th>                    
                     <th>Date</th>
                     <th>Organisation</th>
-                    <th>Info</th>
-                    <th>Indicators</th>
+                    <th>Event title</th>
+                    <th>Attributes</th>
                 </tr>
             </thead>
             <tbody>
                 {% for event in curation_incomplete %}
                 <tr>
-                    <td>{{ event.id }}</td>                    
+                    <td><a href="{{ report_misp_server }}/events/view/{{ event.id }}">{{ event.id }}</a></td>                    
                     <td>{{ event.date }}</td>
-                    <td>{{ event.org }}</td>
-                    <td>{{ event.info }}</td>
-                    <td>{{ event.indicators }}</td>               
+                    <td class="align-left">{{ event.org }}</td>
+                    <td class="align-left">{{ event.info }}</td>
+                    <td class="align-right">{{ event.indicators }}</td>               
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
+
+        <h2>Curated events</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>                    
+                    <th>Date</th>
+                    <th>Organisation</th>
+                    <th>Event title</th>
+                    <th>Attributes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in curation_complete %}
+                <tr>
+                    <td><a href="{{ report_misp_server }}/events/view/{{ event.id }}">{{ event.id }}</a></td>                    
+                    <td>{{ event.date }}</td>
+                    <td class="align-left">{{ event.org }}</td>
+                    <td class="align-left">{{ event.info }}</td>
+                    <td class="align-right">{{ event.indicators }}</td>               
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
     </div>
 
     <footer>

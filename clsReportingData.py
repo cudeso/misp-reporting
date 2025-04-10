@@ -1,7 +1,7 @@
 import sys
 import json
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import logging
 from pymisp import *
 import inspect
@@ -92,7 +92,7 @@ class ReportingData():
 
         self.data["trending-events"] = {}
         self.data["trending-attributes"] = {}
-        self.data["trending-attributes_ids"] = {}        
+        self.data["trending-attributes_ids"] = {}
 
         days = int(''.join(filter(str.isdigit, self.config["reporting_period"])))
         self.logger.debug(" Get {}".format(days))
@@ -112,7 +112,7 @@ class ReportingData():
                     if attr["to_ids"] == 1:
                         attributesqt_ids += 1
         self.data["trending-attributes"][0] = attributesqt
-        self.data["trending-attributes_ids"][0] = attributesqt_ids        
+        self.data["trending-attributes_ids"][0] = attributesqt_ids
 
         count = 1
         while self.config["reporting_trending_count"] > count:
@@ -136,7 +136,7 @@ class ReportingData():
             self.data["trending-events"][start_period] = tmp_len
 
             attributesqt = 0
-            attributesqt_ids = 0            
+            attributesqt_ids = 0
             for event in response:
                 attributesqt += len(event["Event"]["Attribute"])
                 for attr in event["Event"]["Attribute"]:
@@ -359,15 +359,20 @@ class ReportingData():
     def get_curation(self):
         self.logger.debug("Started {}".format(inspect.currentframe().f_code.co_name))
         self.data["curation_complete"] = []
+        self.data["curation_complete_today"] = []
         self.data["curation_incomplete"] = []
+        self.data["curation_incomplete_today"] = []
         self.data["curation_complete_date"] = {}
         self.data["curation_incomplete_date"] = {}
         self.data["curation_orgs_complete"] = {}
         self.data["curation_orgs_incomplete"] = {}
+        self.data["curation_incomplete_high"] = []
+        self.data["curation_incomplete_adm_high"] = []
+
         self.distribution = self.config["distribution"]
         self.analysis_state = self.config["analysis"]
 
-        # Reset to get curation data (published, and not published
+        # Reset to get curation data (published, and not published)
         self.data_for_reporting_period = None
         response = self._get_data_for_reporting_period(published=None)
 
@@ -383,7 +388,14 @@ class ReportingData():
                 if len(tags) > 0:
                     for tag in tags:
                         if tag["name"] == self.workflow_complete:
+                            publish_timestamp_str = event["Event"]["publish_timestamp"]
+                            publish_timestamp = int(publish_timestamp_str)
+                            publish_time = datetime.fromtimestamp(publish_timestamp, tz=timezone.utc)
+                            now = datetime.now(timezone.utc)
+                            if (now - publish_time) < timedelta(days=1):
+                                self.data["curation_complete_today"].append(entry)
                             self.data["curation_complete"].append(entry)
+
                             if event["Event"]["date"] in self.data["curation_complete_date"]:
                                 self.data["curation_complete_date"][event["Event"]["date"]] += 1
                             else:
@@ -396,6 +408,20 @@ class ReportingData():
                             break
 
             if not complete_event:
+                publish_timestamp_str = event["Event"]["publish_timestamp"]
+                publish_timestamp = int(publish_timestamp_str)
+                publish_time = datetime.fromtimestamp(publish_timestamp, tz=timezone.utc)
+                now = datetime.now(timezone.utc)
+                if (now - publish_time) < timedelta(days=1):
+                    self.data["curation_incomplete_today"].append(entry)
+                if event["Event"]["threat_level_id"] == "1":
+                    self.data["curation_incomplete_high"].append(entry)
+                for tag in tags:
+                    if tag["name"] == "admiralty-scale:source-reliability=\"a\"":
+                        self.data["curation_incomplete_adm_high"].append(entry)
+                        break
+                self.data["curation_incomplete"].append(entry)
+
                 if event["Event"]["date"] in self.data["curation_incomplete_date"]:
                     self.data["curation_incomplete_date"][event["Event"]["date"]] += 1
                 else:
@@ -404,7 +430,6 @@ class ReportingData():
                     self.data["curation_orgs_incomplete"][event["Event"]["Orgc"]["name"]] += 1
                 else:
                     self.data["curation_orgs_incomplete"][event["Event"]["Orgc"]["name"]] = 1
-                self.data["curation_incomplete"].append(entry)
 
     def get_infrastructure(self):
         self.logger.debug("Started {}".format(inspect.currentframe().f_code.co_name))
@@ -428,7 +453,7 @@ class ReportingData():
 
                 self.data["statistics-keyorgs"][orgc][period]["events"] += 1
                 self.data["statistics-keyorgs"][orgc][period]["attributes"] += attributesqt
-                self.data["statistics-keyorgs"][orgc][period]["attributes_ids"] += attributesqt_ids                
+                self.data["statistics-keyorgs"][orgc][period]["attributes_ids"] += attributesqt_ids
 
     def _build_misp_filter(self, current_page, published, date_filter):
         filter_params = {

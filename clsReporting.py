@@ -114,11 +114,11 @@ class Reporting:
             current_date = datetime.now()
             past_date = current_date - timedelta(days=days)
             reporting_period = self.config["reporting_period"]
-            updated_dataset["period"] = f"Reporting for the last {reporting_period} (until {past_date.strftime('%Y-%m-%d')})"
+            updated_dataset["period"] = f"(until {past_date.strftime('%Y-%m-%d')})"
             if self.config["reporting_filter"] is not None:
                 updated_dataset["period"] = "{}<br />MISP filters: {}".format(updated_dataset["period"], self.config["reporting_filter"])
-            updated_dataset["events"] = dataset["event_count"]
-            updated_dataset["attributes"] = dataset["attribute_count"]
+            #updated_dataset["events"] = dataset["event_count"]
+            #updated_dataset["attributes"] = dataset["attribute_count"]
             self.data_for_report[key] = updated_dataset
             self.logger.debug(" Created {}".format(key))
         else:
@@ -128,7 +128,9 @@ class Reporting:
         # ###############  Curation events
         key = "curation_complete"
         curation_complete_count = 0
+        curation_complete_today_count = 0
         curation_incomplete_count = 0
+        curation_incomplete_today_count = 0
         curation_complete_events = []
         curation_incomplete_events = []
         if key in self.data:
@@ -140,6 +142,14 @@ class Reporting:
             self.data_for_report[key] = {}
             self.logger.error(" Not found: {}".format(key))
 
+        if "curation_complete_today" in self.data:
+            dataset = self.data["curation_complete_today"]
+            curation_complete_today_count = len(dataset)
+            self.logger.debug(" Created {}".format("curation_complete_today"))
+        else:
+            self.data_for_report["curation_complete_today"] = {}
+            self.logger.error(" Not found: {}".format("curation_complete_today"))
+
         key = "curation_incomplete"
         if key in self.data:
             dataset = self.data[key]
@@ -149,6 +159,32 @@ class Reporting:
         else:
             self.data_for_report[key] = {}
             self.logger.error(" Not found: {}".format(key))
+
+        if "curation_incomplete_today" in self.data:
+            dataset = self.data["curation_incomplete_today"]
+            curation_incomplete_today_count = len(dataset)
+            self.logger.debug(" Created {}".format("curation_incomplete_today"))
+        else:
+            self.data_for_report["curation_incomplete_today"] = {}
+            self.logger.error(" Not found: {}".format("curation_incomplete_today"))
+
+        if "curation_incomplete_high" in self.data:
+            dataset = self.data["curation_incomplete_high"]
+            curation_incomplete_high_count = len(dataset)
+            curation_incomplete_high_events = dataset
+            self.logger.debug(" Created {}".format("curation_incomplete_high"))
+        else:
+            self.data_for_report["curation_incomplete_high"] = {}
+            self.logger.error(" Not found: {}".format("curation_incomplete_high"))
+
+        if "curation_incomplete_adm_high" in self.data:
+            dataset = self.data["curation_incomplete_adm_high"]
+            curation_incomplete_adm_high_count = len(dataset)
+            curation_incomplete_adm_high_events = dataset
+            self.logger.debug(" Created {}".format("curation_incomplete_adm_high"))
+        else:
+            self.data_for_report["curation_incomplete_adm_high"] = {}
+            self.logger.error(" Not found: {}".format("curation_incomplete_adm_high"))
 
         key1 = "curation_incomplete_date"
         key2 = "curation_complete_date"
@@ -167,7 +203,7 @@ class Reporting:
                 values1 = [self.data_for_report[key1].get(m, 0) for m in full_months]
                 values2 = [self.data_for_report[key2].get(m, 0) for m in full_months]
 
-                self.create_bubble_chart(values1, values2, full_months, self.curated_events_bubble_path, "Event dates", "Curated", "Not curated", True)
+                self.create_bubble_chart(values1, values2, full_months, self.curated_events_bubble_path, "Event dates", "Not curated", "Curated", True)
                 self.logger.debug(" Created {} and {}".format(key1, key2))
         else:
             self.data_for_report[key1] = {}
@@ -205,15 +241,21 @@ class Reporting:
             logo=self.config["logo"],
             report_date=self.report_date,
             report_timestamp=datetime.now().strftime('%Y%m%d %H%M%S'),
+            report_timestamp_hm=datetime.now().strftime('%Y-%m-%d'),
+            reporting_period=self.config["reporting_period"],
+
             report_misp_server=self.report_misp_server,
-            summary=self.data_for_report["statistics"],
-            curation_today_incomplete_count=0,
-            curation_today_complete_count=0,
+            summary=self.data_for_report.get("statistics", {}),
+            curation_incomplete_today_count=curation_incomplete_today_count,
+            curation_complete_today_count=curation_complete_today_count,
             curation_complete_count=curation_complete_count,
             curation_incomplete_count=curation_incomplete_count,
 
             curation_complete=curation_complete_events,
             curation_incomplete=curation_incomplete_events,
+
+            curation_incomplete_high=curation_incomplete_high_events,
+            curation_incomplete_adm_high=curation_incomplete_adm_high_events,
 
             curation_complete_org=self.data_for_report["curation_orgs_complete"],
             curation_incomplete_org=self.data_for_report["curation_orgs_incomplete"],
@@ -389,7 +431,7 @@ class Reporting:
                             logo = self.key_organisations[uuid]["logo"]
                             period_events = dataset[uuid]["reporting-period"]["events"]
                             period_attributes = dataset[uuid]["reporting-period"]["attributes"]
-                            period_attributes_ids = dataset[uuid]["reporting-period"]["attributes_ids"]                            
+                            period_attributes_ids = dataset[uuid]["reporting-period"]["attributes_ids"]
                             today_events = dataset[uuid]["today"]["events"]
                             today_attributes = dataset[uuid]["today"]["attributes"]
                             today_attributes_ids = dataset[uuid]["today"]["attributes_ids"]
@@ -418,7 +460,7 @@ class Reporting:
             current_date = datetime.now()
             past_date = current_date - timedelta(days=days)
             reporting_period = self.config["reporting_period"]
-            updated_dataset["period"] = f"Between today and {past_date.strftime('%Y-%m-%d')}"
+            updated_dataset["period"] = f"(until {past_date.strftime('%Y-%m-%d')})"
             if self.config["reporting_filter"] is not None:
                 updated_dataset["period"] = "{}<br />MISP filters: {}".format(updated_dataset["period"], self.config["reporting_filter"])
             if "trending-events" in self.data:
@@ -546,7 +588,7 @@ class Reporting:
         template_css_file = self.template_css
         with open(template_css_file, "r") as f:
             css_content = f.read()
-    
+
         template_file = self.template_html
         with open(template_file, "r") as f:
             html_template = f.read()
@@ -624,9 +666,9 @@ class Reporting:
         # If all values are just dummy 0.1
         if all(v == 0.1 for v in values):
             plt.text(
-                0.5, 0.5, 
-                "No data available", 
-                fontsize=12, ha="center", 
+                0.5, 0.5,
+                "No data available",
+                fontsize=12, ha="center",
                 transform=plt.gca().transAxes
             )
             # Just keep a simple 0,1 scale
@@ -755,4 +797,3 @@ class Reporting:
         plt.tight_layout()
         plt.savefig(output_path, dpi=100)
         plt.close()
-
