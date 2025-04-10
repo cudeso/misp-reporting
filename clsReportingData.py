@@ -168,7 +168,7 @@ class ReportingData():
                     continue
 
                 attribute_type = self._convert_attribute_category(attribute["type"])
-                if attribute_type not in self.data["statistics-attributes"]:
+                if attribute_type and attribute_type not in self.data["statistics-attributes"]:
                     self.data["statistics-attributes"][attribute_type] = [0, 0]
                 self.data["statistics-attributes"][attribute_type][index] += 1
 
@@ -178,7 +178,7 @@ class ReportingData():
                         continue
 
                     attribute_type = self._convert_attribute_category(attr["type"])
-                    if attribute_type not in self.data["statistics-attributes"]:
+                    if attribute_type and attribute_type not in self.data["statistics-attributes"]:
                         self.data["statistics-attributes"][attribute_type] = [0, 0]
                     self.data["statistics-attributes"][attribute_type][index] += 1
 
@@ -344,13 +344,16 @@ class ReportingData():
 
         for cve in tmp_data:
             cve_url = self.config["cve_url"]
-            response = requests.get(f"{cve_url}/{cve}")
-            summary = ""
-            cvss3 = "?"
-            if response.ok:
-                summary = response.json().get("summary", "")
-                cvss3 = response.json().get("cvss3", "?")
-            entry = {"count": tmp_data[cve], "summary": summary, "cvss3": cvss3}
+            try:
+                response = requests.get(f"{cve_url}/{cve}")
+                cve_data = response.json()
+                cvss_base_score = cve_data["containers"]["cna"]["metrics"][0]["cvssV3_1"]["baseScore"]
+                cve_summary = cve_data["containers"]["cna"]["descriptions"][0]["value"]
+            except:
+                self.logger.debug("Unable to get CVE details for {}".format(cve))
+                cvss_base_score = "?"
+                cve_summary = ""
+            entry = {"count": tmp_data[cve], "summary": cve_summary, "cvss3": cvss_base_score}
             self.data["vulnerabilities"][cve] = entry
 
     def get_curation(self):

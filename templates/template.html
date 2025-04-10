@@ -44,6 +44,9 @@
                 </tr>
             </tbody>
         </table>
+
+        <p>Reporting period: Last <strong>{{ reporting_period }}</strong> {{ summary.period }}<br /></strong></p>
+        <p>Published at {{ report_timestamp_hm }}</p>
     </div>
 
     <div class="container">
@@ -62,7 +65,7 @@
             </thead>
             <tbody>
                 <tr>
-                    <td>{{ summary.period }}</td>
+                    <td>&nbsp;</td>
                     <td class="align-right"><strong>{{ summary.today_events }}</strong></td>
                     <td class="align-right"><strong>{{ summary.today_attributes }}</strong></td>
                     <td class="align-right"><strong>{{ summary.today_attributes_ids }}</strong></td>
@@ -121,8 +124,7 @@
 
         <div class="separator"></div>
         
-        <h2>Attributes type distribution</h2>
-        <i>{{ attributes_with_ids_or_not}}</i>
+        <h2>Attributes type distribution <span class="sub_h2">{{ attributes_with_ids_or_not}}</span></h2>
         <div class="charts">
             <div class="chart">
                 <img src="{{ attributes_type_daily_bar_chart_path }}" alt="Attributes type distribution">

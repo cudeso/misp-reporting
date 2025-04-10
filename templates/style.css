@@ -127,3 +127,9 @@ footer {
     margin-top: 20px;
 }
 
+h2 span.sub_h2 {
+    font-size: 0.8rem;
+    color: #898787;
+    font-style: italic;
+    font-weight: normal;
+}

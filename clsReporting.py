@@ -418,7 +418,7 @@ class Reporting:
             current_date = datetime.now()
             past_date = current_date - timedelta(days=days)
             reporting_period = self.config["reporting_period"]
-            updated_dataset["period"] = f"Reporting last 24h and between today and {past_date.strftime('%Y-%m-%d')}"
+            updated_dataset["period"] = f"Between today and {past_date.strftime('%Y-%m-%d')}"
             if self.config["reporting_filter"] is not None:
                 updated_dataset["period"] = "{}<br />MISP filters: {}".format(updated_dataset["period"], self.config["reporting_filter"])
             if "trending-events" in self.data:
@@ -539,9 +539,9 @@ class Reporting:
             reporting_filter_timestamp = "published"
 
         if self.config["filter_attribute_type_ids"] == True:
-            attributes_with_ids_or_not = "Only attributes where to_ids is set to true"
+            attributes_with_ids_or_not = "(only attributes where to_ids is set to true)"
         else:
-            attributes_with_ids_or_not = "All attributes, regardless of the to_ids flag"
+            attributes_with_ids_or_not = "(all attributes, regardless of the to_ids flag)"
 
         template_css_file = self.template_css
         with open(template_css_file, "r") as f:
@@ -558,6 +558,7 @@ class Reporting:
             logo=self.config["logo"],
             report_date=self.report_date,
             report_timestamp=datetime.now().strftime('%Y%m%d %H%M%S'),
+            report_timestamp_hm=datetime.now().strftime('%Y-%m-%d'),
             reporting_period=self.config["reporting_period"],
             report_misp_server=self.report_misp_server,
             summary=self.data_for_report.get("statistics", {}),
