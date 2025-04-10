@@ -620,14 +620,31 @@ class Reporting:
         plt.title(title)
         plt.xlabel("Count")
 
+        # If all values are just dummy 0.1
         if all(v == 0.1 for v in values):
-            plt.text(0.5, 0.5, "No data available", fontsize=12, ha="center", transform=plt.gca().transAxes)
-
-        # Adjust x-ticks
-        if max(values) == 0.1:  # If it's just dummy data
+            plt.text(
+                0.5, 0.5, 
+                "No data available", 
+                fontsize=12, ha="center", 
+                transform=plt.gca().transAxes
+            )
+            # Just keep a simple 0,1 scale
             plt.xticks([0, 1])
         else:
-            plt.xticks(range(0, max(values) + 1))
+            max_val = max(values)
+            # We'll consider integer ticks up to at least ceil of max_val
+            max_int = int(np.ceil(max_val))
+
+            if max_int > 5:
+                # Generate exactly 5 ticks (0 to max_val)
+                ticks = np.linspace(0, max_val, 5)
+                # Round them to integers if desired
+                tick_labels = [int(round(t)) for t in ticks]
+                plt.xticks(ticks, tick_labels)
+            else:
+                # Less than or equal to 5, so just show integer ticks
+                ticks = range(0, max_int + 1)
+                plt.xticks(ticks, ticks)
 
         plt.tight_layout()
         plt.savefig(output_path, dpi=100)

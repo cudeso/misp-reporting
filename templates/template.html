@@ -143,8 +143,8 @@
                 {% for attr_type, count in attributes_type.items() %}
                 <tr>
                     <td>{{ attr_type }}</td>
-                    <td>{{ count[0] }}</td>
                     <td>{{ count[1] }}</td>
+                    <td>{{ count[0] }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -171,7 +171,7 @@
                         <img src="assets/{{ org_data.logo }}" alt="{{ org_name }}" style="height: 40px;">
                         {% endif %}
                     </td>
-                    <td class="align-left"><a href="{{ report_misp_server }}/events/index/searchorg:{{ org_data['org_uuid'] }}">{{ org_name }}</a></td>
+                    <td class="align-left"><a href="{{ report_misp_server }}/events/index/searchorg:{{ org_data['org_uuid'] }}" target="_blank">{{ org_name }}</a></td>
                     <td class="align-right">{{ org_data['today_events'] }}</td>
                     <td class="align-right">{{ org_data['today_attributes'] }}</td>
                     <td class="align-right">{{ org_data['today_attributes_ids'] }}</td>
@@ -364,7 +364,7 @@
                 <tbody>
                     {% for cve, detail in vulnerabilities.items() %}
                     <tr>
-                        <td class="align-left"><a href="{{ vulnerability_lookup_url}}/{{ cve }}">{{ cve }}</a></td>
+                        <td class="align-left"><a href="{{ vulnerability_lookup_url}}/{{ cve }}" target="_blank">{{ cve }}</a></td>
                         <td style="text-align:left">{{ detail.summary }}</td>
                         <td>{{ detail.cvss3 }}</td>
                         <td class="align-right">{{ detail.count }}</td>

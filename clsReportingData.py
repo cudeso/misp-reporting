@@ -407,11 +407,11 @@ class ReportingData():
         self.logger.debug("Started {}".format(inspect.currentframe().f_code.co_name))
 
     def _process_get_statistics_keyorgs(self, response, period):
-        attributesqt = 0
-        attributesqt_ids = 0
         for event in response:
             orgc = event["Event"]["Orgc"]["uuid"]
             if self.key_organisations.get(orgc, False):
+                attributesqt = 0
+                attributesqt_ids = 0
                 attributesqt = len(event["Event"]["Attribute"])
                 for attr in event["Event"]["Attribute"]:
                     if attr["to_ids"] == 1:
