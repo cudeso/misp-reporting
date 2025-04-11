@@ -255,7 +255,9 @@ class Reporting:
             curation_incomplete=curation_incomplete_events,
 
             curation_incomplete_high=curation_incomplete_high_events,
+            curation_incomplete_high_count=curation_incomplete_high_count,
             curation_incomplete_adm_high=curation_incomplete_adm_high_events,
+            curation_incomplete_adm_high_count=curation_incomplete_adm_high_count,
 
             curation_complete_org=self.data_for_report["curation_orgs_complete"],
             curation_incomplete_org=self.data_for_report["curation_orgs_incomplete"],
@@ -580,7 +582,7 @@ class Reporting:
         else:
             reporting_filter_timestamp = "published"
 
-        if self.config["filter_attribute_type_ids"] == True:
+        if self.config["reporting_filter_attribute_type_ids"] == True:
             attributes_with_ids_or_not = "(only attributes where to_ids is set to true)"
         else:
             attributes_with_ids_or_not = "(all attributes, regardless of the to_ids flag)"
@@ -630,6 +632,7 @@ class Reporting:
             reporting_filter_timestamp=reporting_filter_timestamp,
             vulnerability_lookup_url=self.config["vulnerability_lookup"],
             attributes_with_ids_or_not=attributes_with_ids_or_not,
+            cve_highlight=self.config["reporting_cve_highlight"],
         )
 
         output_html_path = os.path.join(self.output_dir, "misp_summary.html")

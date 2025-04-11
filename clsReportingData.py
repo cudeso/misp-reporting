@@ -164,7 +164,7 @@ class ReportingData():
     def _process_attribute_counts(self, events, index):
         for event in events:
             for attribute in event["Event"]["Attribute"]:
-                if self.config["filter_attribute_type_ids"] and attribute["to_ids"] == 0:
+                if self.config["reporting_filter_attribute_type_ids"] and attribute["to_ids"] == 0:
                     continue
 
                 attribute_type = self._convert_attribute_category(attribute["type"])
@@ -174,7 +174,7 @@ class ReportingData():
 
             for misp_object in event["Event"]["Object"]:
                 for attr in misp_object["Attribute"]:
-                    if self.config["filter_attribute_type_ids"] and attr["to_ids"] == 0:
+                    if self.config["reporting_filter_attribute_type_ids"] and attr["to_ids"] == 0:
                         continue
 
                     attribute_type = self._convert_attribute_category(attr["type"])
@@ -196,17 +196,6 @@ class ReportingData():
             self._process_get_statistics_keyorgs(response, "reporting-period")
             response = self._get_data_for_today()
             self._process_get_statistics_keyorgs(response, "today")
-            '''if self.config["reporting_keyorgs_allevents"]:
-                tmp_reponse = []
-                current_page = 1
-                while True:
-                    response = self.misp.search("events", limit=self.config["misp_page_size"], page=current_page, published=True, orgc=org_uuid_list, tags=self.config["reporting_filter"])
-                    if len(response) > 0:
-                        tmp_reponse = tmp_reponse + response
-                    else:
-                        break
-                    current_page += 1
-                self._process_get_statistics_keyorgs(tmp_reponse, "all")'''
 
     def get_threatlevel(self):
         self.logger.debug("Started {}".format(inspect.currentframe().f_code.co_name))

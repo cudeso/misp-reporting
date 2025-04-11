@@ -107,6 +107,10 @@ td.align-right {
 td.align-left {
     text-align: left;
 }
+td.align-topleft {
+    text-align: left;
+    vertical-align: top;
+}
 .table td a {
     color: #FF6600;
     text-decoration: none;

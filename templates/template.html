@@ -54,7 +54,6 @@
         <table class="table">
             <thead>
                 <tr>
-                    <th>Summary</th>
                     <th>Events (24h)</th>
                     <th>Attributes (24h)</th>
                     <th>Attr to_ids (24h)</th>
@@ -65,7 +64,6 @@
             </thead>
             <tbody>
                 <tr>
-                    <td>&nbsp;</td>
                     <td class="align-right"><strong>{{ summary.today_events }}</strong></td>
                     <td class="align-right"><strong>{{ summary.today_attributes }}</strong></td>
                     <td class="align-right"><strong>{{ summary.today_attributes_ids }}</strong></td>
@@ -366,9 +364,13 @@
                 <tbody>
                     {% for cve, detail in vulnerabilities.items() %}
                     <tr>
-                        <td class="align-left"><a href="{{ vulnerability_lookup_url}}/{{ cve }}" target="_blank">{{ cve }}</a></td>
-                        <td style="text-align:left">{{ detail.summary }}</td>
-                        <td>{{ detail.cvss3 }}</td>
+                        <td class="align-topleft"><a href="{{ vulnerability_lookup_url}}/{{ cve }}" target="_blank">{{ cve }}</a></td>
+                        <td class="align-left">{{ detail.summary }}</td>
+                        <td>{{ detail.cvss3 }}
+                            {% if detail.cvss3 > cve_highlight %}
+                                <span style="color: red; font-size: 1.2em;" title="Warning">&#9888;</span>
+                            {% endif %}
+                        </td>
                         <td class="align-right">{{ detail.count }}</td>
                     </tr>
                     {% endfor %}

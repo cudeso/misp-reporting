@@ -4,9 +4,12 @@ config = {
 
         "reporting_period": "30d",
         "reporting_filter": None,
-        #"reporting_keyorgs_allevents": False,
         "reporting_eventdetails_onlykeyorgs": True,
         "reporting_trending_count": 6,
+        "reporting_filter_attribute_type_ids": True,
+        "reporting_filter_timestamp": "published",
+        "reporting_filter_published": True,
+
         "print_event_details": False,
         
         "misp_url": "",
@@ -44,17 +47,16 @@ config = {
         "workflow_incomplete": "workflow:state=\"incomplete\"",
 
         "filter_sector": "misp-galaxy:sector",
+        "filter_sector_count": 10,
         "filter_geo":  "misp-galaxy:target-information",
+        "filter_geo_count": 10,
         "filter_ttp_actors": ["misp-galaxy:threat-actor", "misp-galaxy:mitre-intrusion-set"],
+        "filter_ttp_actors_count": 15,
         "filter_ttp_pattern": ["misp-galaxy:mitre-attack-pattern"],
-        "reporting_filter_timestamp": "published",
-        "reporting_filter_published": True,
+        "filter_ttp_pattern_count": 15,
+        
         "vulnerability_lookup": "https://vulnerability.circl.lu/vuln/",
 
-        "filter_geo_count": 10,
-        "filter_sector_count": 10,
-        "filter_ttp_actors_count": 15,
-        "filter_ttp_pattern_count": 15,      
-        "filter_attribute_type_ids": True,
+        "reporting_cve_highlight": 8,
 
         }

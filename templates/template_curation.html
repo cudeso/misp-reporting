@@ -22,6 +22,27 @@
             <a href="misp_curation.html" class="curation">Curation Overview</a>
             <a href="misp_infrastructure.html" class="infrastructure">Infrastructure Monitoring</a>
         </div>
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Not curated (24h)</th>
+                    <th>Not curated with threat level high (24h)</th>
+                    <th>Not curated from completely reliable sources (24h)</th>                    
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="align-right">{{ curation_incomplete_today_count }}
+                        <br /><a href='{{ report_misp_server }}/events/index/searchtag:!workflow:state="complete"'>Events</a></td>
+                    <td class="align-right">{{ curation_incomplete_high_count }}
+                        <br /><a href='{{ report_misp_server }}/events/index/searchtag:!workflow:state="complete"/searchthreatlevel:1'>Events</a></td>
+                    <td class="align-right">{{ curation_incomplete_adm_high_count}}
+                        <br /><a href='{{ report_misp_server }}/events/index/searchtag:admiralty-scale:source-reliability="a"/searchpublished:0'>Events</a></td>
+                </tr>
+            </tbody>
+        </table>
+
         <p>Reporting period: Last <strong>{{ reporting_period }}</strong> {{ summary.period }}<br /></strong></p>
         <p>Published at {{ report_timestamp_hm }}</p>
     </div>
