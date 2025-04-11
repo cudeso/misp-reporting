@@ -367,7 +367,7 @@
                         <td class="align-topleft"><a href="{{ vulnerability_lookup_url}}/{{ cve }}" target="_blank">{{ cve }}</a></td>
                         <td class="align-left">{{ detail.summary }}</td>
                         <td>{{ detail.cvss3 }}
-                            {% if detail.cvss3 > cve_highlight %}
+                            {% if detail.cvss3|float > cve_highlight|float %}
                                 <span style="color: red; font-size: 1.2em;" title="Warning">&#9888;</span>
                             {% endif %}
                         </td>

@@ -397,6 +397,7 @@ class ReportingData():
                             break
 
             if not complete_event:
+                self.logger.debug("Consider event {} {} as incomplete".format(event["Event"]["id"], event["Event"]["info"]))
                 publish_timestamp_str = event["Event"]["publish_timestamp"]
                 publish_timestamp = int(publish_timestamp_str)
                 publish_time = datetime.fromtimestamp(publish_timestamp, tz=timezone.utc)
@@ -405,6 +406,7 @@ class ReportingData():
                     self.data["curation_incomplete_today"].append(entry)
                 if event["Event"]["threat_level_id"] == "1":
                     self.data["curation_incomplete_high"].append(entry)
+                tags = event["Event"].get("Tag", [])
                 for tag in tags:
                     if tag["name"] == "admiralty-scale:source-reliability=\"a\"":
                         self.data["curation_incomplete_adm_high"].append(entry)
@@ -464,7 +466,10 @@ class ReportingData():
         if not self.data_for_reporting_period:
             current_page = 1
             while True:
-                filter_params = self._build_misp_filter(current_page, self.config["reporting_filter_published"], self.config["reporting_period"])
+                if not published:
+                    filter_params = self._build_misp_filter(current_page, published, self.config["reporting_period"])
+                else:
+                    filter_params = self._build_misp_filter(current_page, self.config["reporting_filter_published"], self.config["reporting_period"])
                 tmp_reponse = self.misp.search("events", **filter_params)
                 if len(tmp_reponse) > 0:
                     response = response + tmp_reponse
