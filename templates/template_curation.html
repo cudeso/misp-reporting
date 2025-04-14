@@ -49,6 +49,7 @@
 
     <div class="container">
         <h1>Curation summary</h1>
+        <h2>Curated and not curated</h2>       
         <table class="table">
             <thead>
                 <tr>
@@ -71,12 +72,14 @@
             </tbody>
         </table>
 
+        <h2>Event dates <span class="sub_h2">(event dates indicate when a threat occurred and are set by the event creator)</span></h2>
         <div class="charts">
             <div class="chart">
                 <img src="{{ curated_events_bubble }}" alt="Bubble graph of curation results">
             </div>
         </div>
 
+        <h1>Curation for last {{ reporting_period }}</h1>
         <div class="tables">
             <table class="table">
                 <thead>
