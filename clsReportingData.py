@@ -404,13 +404,16 @@ class ReportingData():
                 now = datetime.now(timezone.utc)
                 if (now - publish_time) < timedelta(days=1):
                     self.data["curation_incomplete_today"].append(entry)
-                if event["Event"]["threat_level_id"] == "1":
-                    self.data["curation_incomplete_high"].append(entry)
-                tags = event["Event"].get("Tag", [])
-                for tag in tags:
-                    if tag["name"] == "admiralty-scale:source-reliability=\"a\"":
-                        self.data["curation_incomplete_adm_high"].append(entry)
-                        break
+
+                    # Additional reporting for curation of today
+                    if event["Event"]["threat_level_id"] == "1":
+                        self.data["curation_incomplete_high"].append(entry)
+                    tags = event["Event"].get("Tag", [])
+                    for tag in tags:
+                        if tag["name"] == "admiralty-scale:source-reliability=\"a\"":
+                            self.data["curation_incomplete_adm_high"].append(entry)
+                            break
+                        
                 self.data["curation_incomplete"].append(entry)
 
                 if event["Event"]["date"] in self.data["curation_incomplete_date"]:
