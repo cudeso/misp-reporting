@@ -1,5 +1,5 @@
 config = {
-        "logfile": "/var/log/misp/misp-reporting.log",
+        "logfile": "/var/www/MISP/app/tmp/logs/misp-reporting.log",
         "logname": "misp-reporting",
 
         "reporting_period": "30d",
@@ -19,10 +19,11 @@ config = {
         "cve_url": "https://cvepremium.circl.lu/api/cve/",
 
         "output_assets": "assets",
-        "output_dir": "/var/www/MISP/app/webroot/reporting/reporting",
-        "template_html": "template.html",
-        "template_curation_html": "template_curation.html",
-        "template_infrastructure_html": "template_infrastructure.html",
+        "output_dir": "/var/www/MISP/app/webroot/misp-reporting",
+        "template_html": "templates/template.html",
+        "template_css" : "templates/style.css",
+        "template_curation_html": "templates/template_curation.html",
+        "template_infrastructure_html": "templates/template_infrastructure.html",
         "noimage_path": "no-image-32.png",
         "logo": "assets/cudeso.png",
 
