@@ -22,8 +22,47 @@
             <a href="misp_curation.html" class="curation">Curation Overview</a>
             <a href="misp_infrastructure.html" class="infrastructure">Infrastructure Monitoring</a>
         </div>
-        <h1>Summary</h1>
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Remote servers</th>
+                    <th>Feeds</th>
+                    <th>Workers</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>                    
+                </tr>
+            </tbody>
+        </table>
+
+        <p>Published at {{ report_timestamp_hm }}</p>
     </div>
+
+    <div class="container">
+        <h1>Remote servers</h1>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Server</th>
+                    <th>User</th>
+                    <th>Status</th>
+                    <th>Events</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                </tr>
+            </tbody>
+        </table>
 
     <footer>
         Source server: {{ report_misp_server }}<br />

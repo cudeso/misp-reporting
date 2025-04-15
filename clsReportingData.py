@@ -397,7 +397,8 @@ class ReportingData():
                             break
 
             if not complete_event:
-                self.logger.debug("Consider event {} {} as incomplete".format(event["Event"]["id"], event["Event"]["info"]))
+                if self.config["log_incomplete"]:
+                    self.logger.debug("Consider event {} {} as incomplete".format(event["Event"]["id"], event["Event"]["info"]))
                 publish_timestamp_str = event["Event"]["publish_timestamp"]
                 publish_timestamp = int(publish_timestamp_str)
                 publish_time = datetime.fromtimestamp(publish_timestamp, tz=timezone.utc)

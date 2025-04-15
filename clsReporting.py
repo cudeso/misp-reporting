@@ -26,10 +26,10 @@ class Reporting:
         self.report_misp_server = self.config["misp_url"]
         self.reporting_period = self.config["reporting_period"]
         self.output_dir = self.config["output_dir"]
-        self.template_css = self.config["template_css"]
-        self.template_html = self.config["template_html"]
-        self.template_curation_html = self.config["template_curation_html"]
-        self.template_infrastructure_html = self.config["template_infrastructure_html"]
+        self.template_css = "{}/{}".format(self.config["install_dir"], self.config["template_css"])
+        self.template_html = "{}/{}".format(self.config["install_dir"], self.config["template_html"])
+        self.template_curation_html = "{}/{}".format(self.config["install_dir"], self.config["template_curation_html"])
+        self.template_infrastructure_html = "{}/{}".format(self.config["install_dir"], self.config["template_infrastructure_html"])
         self.assets_dir = os.path.join(self.output_dir, self.config["output_assets"])
         os.makedirs(self.assets_dir, exist_ok=True)
 
@@ -630,7 +630,7 @@ class Reporting:
             sector_targeting_bar_chart_path=os.path.basename(self.sector_targeting_bar_chart_path),
 
             reporting_filter_timestamp=reporting_filter_timestamp,
-            vulnerability_lookup_url=self.config["vulnerability_lookup"],
+            vulnerability_lookup_url=self.config["vulnerability_lookup_url"],
             attributes_with_ids_or_not=attributes_with_ids_or_not,
             cve_highlight=self.config["reporting_cve_highlight"],
         )

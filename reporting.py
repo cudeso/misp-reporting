@@ -16,6 +16,8 @@ import numpy as np
 from config import config
 from clsReporting import *
 from clsReportingData import *
+from clsReportingStatistics import *
+
 
 
 def main(config):
@@ -44,6 +46,9 @@ def main(config):
     reporting.render_report()
     reporting.render_curation_report()
     reporting.render_infrastructure()
+
+    statistics = ReportingStatistics(config, logger, data.data)
+    statistics.render_statistics()
 
     logger.info("End ".format(config["logname"]))
 
