@@ -273,7 +273,7 @@
     </div>
 
     <div class="container">
-        <h2>Geo target information ({{ reporting_period }})</h2>
+        <h2>Geo target information of {{reporting_filter_timestamp}} events ({{ reporting_period }})</h2>
         <div class="chart">
             <img src="{{ geo_targeting_map_path }}" alt="Geo targeting map">
         </div>
@@ -293,7 +293,7 @@
                 {% endfor %}
             </tbody>
         </table>
-        <h2>Sector targeting ({{ reporting_period }})</h2>
+        <h2>Sector targeting of {{reporting_filter_timestamp}} events ({{ reporting_period }})</h2>
         <div class="chart">
             <img src="{{ sector_targeting_bar_chart_path }}" alt="Sector targeting">
         </div>
@@ -316,7 +316,7 @@
     </div>    
 
     <div class="container">
-        <h2>TTPs ({{ reporting_period }})</h2>
+        <h2>TTPs of {{reporting_filter_timestamp}} events ({{ reporting_period }})</h2>
         <div class="tables">
             <table class="table">
                 <thead>
@@ -356,7 +356,7 @@
     </div>
 
     <div class="container">
-        <h2>Vulnerabilities and weaknesses ({{ reporting_period }})</h2>
+        <h2>Vulnerabilities and weaknesses found in {{reporting_filter_timestamp}} events ({{ reporting_period }})</h2>
         <div class="tables">
             <table class="table">
                 <thead>

@@ -459,6 +459,7 @@ class ReportingData():
         }
         if self.config["reporting_filter_timestamp"] == "timestamp":
             filter_params["timestamp"] = date_filter
+            filter_params["published"] = None
         elif self.config["reporting_filter_timestamp"] == "published":
             filter_params["publish_timestamp"] = date_filter
         else:   # default to published

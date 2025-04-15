@@ -93,7 +93,9 @@ class Reporting:
             logo=self.config["logo"],
             report_date=self.report_date,
             report_timestamp=datetime.now().strftime('%Y%m%d %H%M%S'),
+            report_timestamp_hm=datetime.now().strftime('%Y-%m-%d'),
             report_misp_server=self.report_misp_server,
+            
         )
 
         # Save the HTML file
