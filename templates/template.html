@@ -53,7 +53,7 @@
             </tbody>
         </table>
 
-        <p>Reporting period: Last <strong>{{ reporting_period }}</strong> {{ summary.period }}<br /></strong>. Published at {{ report_timestamp_hm }}</p>
+        <p>Reporting period: Last <strong>{{ reporting_period }}</strong> {{ summary.period }}</strong>. Published at {{ report_timestamp_hm }}</p>
     </div>
 
     <div class="container">
@@ -81,7 +81,7 @@
             </tbody>
         </table>
 
-        <h2>Trending events and attributes</h2>
+        <h2>Trending events and attributes for {{reporting_filter_timestamp}} events</h2>
         <div class="charts">
             <div class="chart">
                 <img src="{{ events_trending_path }}" alt="Trending {{reporting_filter_timestamp}} events">
@@ -126,10 +126,8 @@
                 </tbody>
             </table>
         </div>
-
-        <div class="separator"></div>
         
-        <h2>Attributes type distribution <span class="sub_h2">{{ attributes_with_ids_or_not}}</span></h2>
+        <h2>Attributes type distribution for {{reporting_filter_timestamp}} events<span class="sub_h2">{{ attributes_with_ids_or_not}}</span></h2>
         <div class="charts">
             <div class="chart">
                 <img src="{{ attributes_type_daily_bar_chart_path }}" alt="Attributes type distribution">
@@ -156,7 +154,7 @@
                 {% endfor %}
             </tbody>
         </table>
-        <h2>Activity of key organisations</h2>
+        <h2>Activity of key organisations for {{reporting_filter_timestamp}} events</h2>
         <table class="table">
             <thead>
                 <tr>
@@ -189,9 +187,10 @@
                 {% endfor %}
             </tbody>
         </table>
-        <div class="separator"></div>
+    </div>
 
-        <h2>Threat level and TLP of events ({{ reporting_period }})</h2>
+    <div class="container">
+        <h2>Threat level and TLP of {{reporting_filter_timestamp}} events ({{ reporting_period }})</h2>
         <div class="charts">
             <div class="chart">
                 <img src="{{ threatlevel_bar_chart_path }}" alt="Threat level">
