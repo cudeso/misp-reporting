@@ -19,7 +19,6 @@ from clsReportingData import *
 from clsReportingStatistics import *
 
 
-
 def main(config):
     logger.info("Start {}".format(config["logname"]))
 
@@ -36,10 +35,9 @@ def main(config):
     data.get_target_geo()
     data.get_ttp()
     data.get_vulnerabilities()
-
     data.get_curation()
-
     data.get_infrastructure()
+    data.get_misp_statistics()
 
     reporting = Reporting(config, logger, data.data)
     reporting.write_index()
@@ -47,7 +45,7 @@ def main(config):
     reporting.render_curation_report()
     reporting.render_infrastructure()
 
-    statistics = ReportingStatistics(config, logger, data.data)
+    statistics = ReportingStatistics(config, logger, data.statistics, data.today_statistics, data.statistics_attributes)
     statistics.render_statistics()
 
     logger.info("End ".format(config["logname"]))

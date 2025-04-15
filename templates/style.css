@@ -68,6 +68,16 @@ header .date {
     background-color: #e68a00;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
+.button-bar a.login {
+    margin-left: auto; 
+    display: flex; 
+    background-color: #FF9900;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);    
+}
+.button-bar a.login:hover {
+    background-color: #e68a00;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
 .charts {
     display: flex;
     justify-content: space-between;

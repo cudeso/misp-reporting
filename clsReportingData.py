@@ -338,8 +338,8 @@ class ReportingData():
                 cve_data = response.json()
                 cvss_base_score = cve_data["containers"]["cna"]["metrics"][0]["cvssV3_1"]["baseScore"]
                 cve_summary = cve_data["containers"]["cna"]["descriptions"][0]["value"]
-            except:
-                self.logger.debug("Unable to get CVE details for {}".format(cve))
+            except Exception as e:
+                self.logger.debug("Unable to get CVE details for {} - {}".format(cve, e))
                 cvss_base_score = "?"
                 cve_summary = ""
             entry = {"count": tmp_data[cve], "summary": cve_summary, "cvss3": cvss_base_score}
@@ -519,3 +519,24 @@ class ReportingData():
         else:
             self.logger.error(f"[{response.status_code}] Other: {response.reason}")
         return False
+    
+    def get_misp_statistics(self):
+        statistics = {"event_count": self.data["statistics"]["event_count"],
+                      "attribute_count": self.data["statistics"]["attribute_count"],
+                      "user_count": self.data["statistics"]["user_count"],
+                      "org_count": self.data["statistics"]["org_count"],
+                      "local_org_count": self.data["statistics"]["local_org_count"]}
+        
+        today_statistics = {"today_event_count": self.data["today-attributes"],
+                            "today_attribute_count": self.data["today-attributes"],
+                            "today_attribute_ids_count": self.data["today-attributes_ids"]}
+
+        filtered_statistics_attributes = {
+            key: value[1]
+            for key, value in self.data["statistics-attributes"].items()
+        }
+
+        self.statistics = statistics
+        self.today_statistics = today_statistics
+        self.statistics_attributes = filtered_statistics_attributes
+                

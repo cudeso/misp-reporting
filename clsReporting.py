@@ -445,8 +445,8 @@ class Reporting:
                                                         "today_attributes_ids": f"{today_attributes_ids}"}
                         else:
                             self.logger.error("Unable to get organisation info for {}".format(uuid))
-                    except:
-                        self.logger.error("Unable to get organisation info for {}".format(uuid))
+                    except Exception as e:
+                        self.logger.error("Unable to get organisation info for {} - {}".format(uuid, e))
             self.data_for_report[key] = updated_dataset
             self.logger.debug(" Created {}".format(key))
         else:
