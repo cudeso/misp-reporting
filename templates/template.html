@@ -127,7 +127,7 @@
             </table>
         </div>
         
-        <h2>Attributes type distribution for {{reporting_filter_timestamp}} events<span class="sub_h2">{{ attributes_with_ids_or_not}}</span></h2>
+        <h2>Attributes type distribution for {{reporting_filter_timestamp}} events <span class="sub_h2">{{ attributes_with_ids_or_not}}</span></h2>
         <div class="charts">
             <div class="chart">
                 <img src="{{ attributes_type_daily_bar_chart_path }}" alt="Attributes type distribution">
@@ -362,6 +362,7 @@
                 <thead>
                     <tr>
                         <th>Vulnerability</th>
+			<th>Events</th>
                         <th>Summary</th>
                         <th>CVSSv3</th></h>
                         <th>Count</th>
@@ -371,6 +372,7 @@
                     {% for cve, detail in vulnerabilities.items() %}
                     <tr>
                         <td class="align-topleft"><a href="{{ vulnerability_lookup_url}}/{{ cve }}" target="_blank">{{ cve }}</a></td>
+                        <td class="align-topleft"><a href="{{ report_misp_server }}/events/index/searchall:{{ cve }}" target="_blank">MISP</a></td>
                         <td class="align-left">{{ detail.summary }}</td>
                         <td>{{ detail.cvss3 }}
                             {% if detail.cvss3|float > cve_highlight|float %}
