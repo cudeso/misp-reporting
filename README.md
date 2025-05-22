@@ -33,7 +33,7 @@ To keep system packages untouched, create a dedicated virtual environment named 
 
 ```bash
 sudo -u www-data virtualenv venv
-sudo -u www-data pip install -r requirements.txt
+sudo -u www-data venv/bin/pip install -r requirements.txt
 ```
 
 **Step 3: Configure the application**
@@ -57,7 +57,7 @@ Reports are written to `output_dir`, usually `/var/www/MISP/app/webroot/misp-rep
 
 ```bash
 sudo -u www-data mkdir /var/www/MISP/app/webroot/misp-reporting/
-sudo -u www-data cp -r /var/www/MISP/misp-custom/assets /var/www/MISP/app/webroot/misp-reporting/
+sudo -u www-data cp -r /var/www/MISP/misp-custom/misp-reporting/assets /var/www/MISP/app/webroot/misp-reporting/
 chown -R www-data:www-data /var/www/MISP/app/webroot/misp-reporting/
 ```
 
