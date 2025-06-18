@@ -30,6 +30,7 @@ class Reporting:
         self.template_html = "{}/{}".format(self.config["install_dir"], self.config["template_html"])
         self.template_curation_html = "{}/{}".format(self.config["install_dir"], self.config["template_curation_html"])
         self.template_infrastructure_html = "{}/{}".format(self.config["install_dir"], self.config["template_infrastructure_html"])
+        self.template_contributors_html = "{}/{}".format(self.config["install_dir"], self.config["template_contributors_html"])
         self.assets_dir = os.path.join(self.output_dir, self.config["output_assets"])
         os.makedirs(self.assets_dir, exist_ok=True)
 
@@ -103,10 +104,87 @@ class Reporting:
         with open(output_html_path, "w") as f:
             f.write(html_content)
         return True
+    
+    def render_contributors(self):
+        self.logger.debug("Started {}".format(inspect.currentframe().f_code.co_name))
+
+        print_misp_filters = None
+        if self.config["reporting_filter"] is not None:
+            print_misp_filters = self.config["reporting_filter"]
+
+        days = int(self.config["reporting_period"].strip("d"))
+        current_date = datetime.now()
+        past_date = current_date - timedelta(days=days)
+        print_period = f"(until {past_date.strftime('%Y-%m-%d')})"
+            
+        # ###############  Contributing organisations
+        key = "contributor_orgs"
+        if key in self.data:
+            dataset = self.data[key]
+            updated_dataset = {}
+            for orgid in dataset:
+                try:
+                    org = self.misp.get_organisation(orgid)
+                    if "Organisation" in org:
+                        org_name = org["Organisation"]["name"]
+                        uuid = org["Organisation"]["uuid"]
+                        logo = None
+                        if uuid in self.key_organisations:
+                            logo = self.key_organisations[uuid]["logo"]
+                        period_events = dataset[orgid]["reporting-period"]
+                        today_events = dataset[orgid]["today"]
+                        alltime_events = dataset[orgid]["all_time"]
+                        updated_dataset[org_name] = {"logo": logo, "org_uuid": uuid, "period_events": period_events,
+                                                    "today_events": today_events, "alltime_events": alltime_events}
+                    else:
+                        self.logger.error("Unable to get organisation info for {}".format(orgid))
+                except Exception as e:
+                    self.logger.error("Unable to get organisation info for {} - {}".format(orgid, e))
+            self.data_for_report[key] = updated_dataset
+            self.logger.debug(" Created {}".format(key))
+        else:
+            self.data_for_report[key] = {}
+            self.logger.error(" Not found: {}".format(key))
+            
+        reporting_filter = ""
+        if self.config["reporting_filter"] is not None:
+            reporting_filter = "MISP filters: {} ".format(self.config["reporting_filter"])
+
+        template_css_file = self.template_css
+        with open(template_css_file, "r") as f:
+            css_content = f.read()
+
+        template_file = self.template_contributors_html
+        with open(template_file, "r") as f:
+            html_template = f.read()
+
+        # Render the HTML
+        template = Template(html_template)
+        html_content = template.render(
+            css=css_content,
+            title="MISP Contributors summary",
+            logo=self.config["logo"],
+            report_date=self.report_date,
+            report_misp_filters=print_misp_filters,
+            report_timestamp=datetime.now().strftime('%Y%m%d %H%M%S'),
+            report_timestamp_hm=datetime.now().strftime('%Y-%m-%d'),
+            reporting_period=self.config["reporting_period"],
+            summary={"period": print_period},            
+            report_misp_server=self.report_misp_server,
+            contributors_org = self.data_for_report["contributor_orgs"],
+            contributors_user = {}            
+        )
+
+        # Save the HTML file
+        output_html_path = os.path.join(self.output_dir, "misp_contributors.html")
+        with open(output_html_path, "w") as f:
+            f.write(html_content)
+        return True    
 
     def render_curation_report(self):
         self.logger.debug("Started {}".format(inspect.currentframe().f_code.co_name))
 
+        print_misp_filters = None
         # ###############  General statistics
         key = "statistics"
         if key in self.data:
@@ -118,7 +196,7 @@ class Reporting:
             reporting_period = self.config["reporting_period"]
             updated_dataset["period"] = f"(until {past_date.strftime('%Y-%m-%d')})"
             if self.config["reporting_filter"] is not None:
-                updated_dataset["period"] = "{}<br />MISP filters: {}".format(updated_dataset["period"], self.config["reporting_filter"])
+                print_misp_filters = self.config["reporting_filter"]
             #updated_dataset["events"] = dataset["event_count"]
             #updated_dataset["attributes"] = dataset["attribute_count"]
             self.data_for_report[key] = updated_dataset
@@ -135,6 +213,11 @@ class Reporting:
         curation_incomplete_today_count = 0
         curation_complete_events = []
         curation_incomplete_events = []
+        curation_incomplete_high_events = []
+        curation_incomplete_high_count = 0
+        curation_incomplete_adm_high_events = []
+        curation_incomplete_adm_high_count = 0
+
         if key in self.data:
             dataset = self.data[key]
             curation_complete_count = len(dataset)
@@ -242,6 +325,7 @@ class Reporting:
             title="MISP Curation summary",
             logo=self.config["logo"],
             report_date=self.report_date,
+            report_misp_filters=print_misp_filters,
             report_timestamp=datetime.now().strftime('%Y%m%d %H%M%S'),
             report_timestamp_hm=datetime.now().strftime('%Y-%m-%d'),
             reporting_period=self.config["reporting_period"],
@@ -335,6 +419,7 @@ class Reporting:
             if os.path.exists(img):
                 os.remove(img)
 
+        print_misp_filters = None
         # ###############  Trending events
         key = "trending-events"
         if key in self.data:
@@ -466,7 +551,7 @@ class Reporting:
             reporting_period = self.config["reporting_period"]
             updated_dataset["period"] = f"(until {past_date.strftime('%Y-%m-%d')})"
             if self.config["reporting_filter"] is not None:
-                updated_dataset["period"] = "{}<br />MISP filters: {}".format(updated_dataset["period"], self.config["reporting_filter"])
+                print_misp_filters = self.config["reporting_filter"]
             if "trending-events" in self.data:
                 updated_dataset["period_events"] = self.data["trending-events"][0]
                 updated_dataset["period_attributes"] = self.data["trending-attributes"][0]
@@ -603,6 +688,7 @@ class Reporting:
             title="MISP Summary",
             logo=self.config["logo"],
             report_date=self.report_date,
+            report_misp_filters=print_misp_filters,
             report_timestamp=datetime.now().strftime('%Y%m%d %H%M%S'),
             report_timestamp_hm=datetime.now().strftime('%Y-%m-%d'),
             reporting_period=self.config["reporting_period"],

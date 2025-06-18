@@ -54,17 +54,10 @@ header .date {
     background-color: #e65c00;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
-.button-bar a.curation {
-    background-color: #FF8800;
-}
-.button-bar a.curation:hover {
-    background-color: #e67a00;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-}
-.button-bar a.infrastructure {
+.button-bar a.section {
     background-color: #FF9900;
 }
-.button-bar a.infrastructure:hover {
+.button-bar a.section:hover {
     background-color: #e68a00;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }

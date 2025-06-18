@@ -54,18 +54,11 @@ header .date {
     background-color: #003366; /* #e65c00;*/
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
-.button-bar a.curation {
+.button-bar a.section {
     background-color: #004080; /* #FF8800;*/
 }
-.button-bar a.curation:hover {
+.button-bar a.section:hover {
     background-color: #003366; /* #e67a00;*/
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-}
-.button-bar a.infrastructure {
-    background-color: #00509e; /*#FF9900;*/
-}
-.button-bar a.infrastructure:hover {
-    background-color: #004080; /* #e68a00;*/
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 .button-bar a.login {

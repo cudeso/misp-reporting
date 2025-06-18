@@ -540,4 +540,39 @@ class ReportingData():
         self.statistics = statistics
         self.today_statistics = today_statistics
         self.statistics_attributes = filtered_statistics_attributes
-                
+
+    def _process_get_contributors_orgs(self, response, period):
+        for event in response:
+            orgc = event["Event"]["Orgc"]["uuid"]
+            orgc_id = event["Event"]["Orgc"]["id"]
+            if orgc_id in self.data["contributor_orgs"]:
+                self.data["contributor_orgs"][orgc_id][period] += 1
+                self.data["contributor_orgs"][orgc_id]["uuid"] = orgc
+
+    def get_contributors(self):
+        self.logger.debug("Started {}".format(inspect.currentframe().f_code.co_name))
+        self.data["contributor_orgs"] = {}
+
+        contributor_orgs = self._request_get("/users/statistics/orgs/scope:all")
+        if contributor_orgs and len(contributor_orgs.json()) > 0:
+            contributor_orgs_json = contributor_orgs.json()
+            for contributor_org in contributor_orgs_json:
+                if "eventCount" in contributor_orgs_json[contributor_org]:
+                    entry = {
+                        "name": contributor_orgs_json[contributor_org]["name"],
+                        "id": contributor_orgs_json[contributor_org]["id"],
+                        "uuid": False,
+                        "all_time": contributor_orgs_json[contributor_org]["eventCount"],
+                        "reporting-period": 0,
+                        "today": 0
+                    }
+                    self.data["contributor_orgs"][contributor_orgs_json[contributor_org]["id"]] = entry
+                    
+            response = self._get_data_for_reporting_period()
+            self._process_get_contributors_orgs(response, "reporting-period")
+            response = self._get_data_for_today()
+            self._process_get_contributors_orgs(response, "today")
+
+        sorted_data = dict(sorted(
+            self.data["contributor_orgs"].items(), key=lambda item: int(item[1]["all_time"]), reverse=True))
+        self.data["contributor_orgs"] = sorted_data
