@@ -274,6 +274,7 @@ Installation paths, templates, and appearance:
         "template_html": "templates/template.html",
         "template_curation_html": "templates/template_curation.html",
         "template_infrastructure_html": "templates/template_infrastructure.html",
+        "template_contributors_html": "templates/template_contributors.html",
         "noimage_path": "no-image-32.png",
         "logo": "assets/cudeso.png",
 
