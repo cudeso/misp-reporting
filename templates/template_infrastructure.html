@@ -31,47 +31,95 @@
           </a>
         </div>
 
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Remote servers</th>
-                    <th>Feeds</th>
-                    <th>Workers</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>-</td>
-                    <td>-</td>
-                    <td>-</td>                    
-                </tr>
-            </tbody>
-        </table>
-
         <p>Published at {{ report_timestamp_hm }}.</p>
-        <p><i>Development in progress</i></p>
     </div>
 
-    <div class="container">
-        <h1>Remote servers</h1>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Server</th>
-                    <th>User</th>
-                    <th>Status</th>
-                    <th>Events</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>-</td>
-                    <td>-</td>
-                    <td>-</td>
-                    <td>-</td>
-                </tr>
-            </tbody>
-        </table>
+<div class="container">
+  <h1>Infrastructure overview</h1>
+  <h2>Server status</h2>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Server</th>
+        <th>Location</th>
+        <th>Status</th>
+        <th>Version</th>
+        <th>ZMQ</th>
+        <th>Enrichment</th>
+        <th>Import</th>
+        <th>Export</th>
+        <th>Cache Worker</th>
+        <th>Default Worker</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for server_name, server_info in report_misp_results.items() %}
+      <tr>
+        <td>{{ server_name }}</td>
+        <td>{{ server_info.url }}</td>
+        <td>
+          {% if server_info.status == "OK" %}
+            ✅
+          {% else %}
+            ❌
+          {% endif %}
+        </td>
+        {% if server_info.status == "OK" %}
+          <td>{{ server_info.server.version }}</td>
+          <td>{% if server_info.server.zmqStatus == 0 %}✅{% else %}❌{% endif %}</td>
+          <td>{% if server_info.server.moduleStatus_enrichment == 0 %}✅{% else %}❌{% endif %}</td>
+          <td>{% if server_info.server.moduleStatus_import == 0 %}✅{% else %}❌{% endif %}</td>
+          <td>{% if server_info.server.moduleStatus_export == 0 %}✅{% else %}❌{% endif %}</td>
+          <td>{% if server_info.server.workers.cache == "OK" %}✅{% else %}❌{% endif %}</td>
+          <td>{% if server_info.server.workers.default == "OK" %}✅{% else %}❌{% endif %}</td>
+        {% else %}
+          <td colspan="7">–</td>
+        {% endif %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% for server_name, server_info in report_misp_results.items() %}
+    <h2>Remote servers for {{ server_name }}</h2>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th class="align-left">Name</th>
+          <th class="align-left">URL</th>
+          <th>Status</th>
+          <th>Info</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for remote in server_info.remote_servers %}
+        <tr>
+          <td>{{ remote.id }}</td>
+          <td class="align-left">{{ remote.name }}</td>
+          <td class="align-left">{{ remote.url }}</td>
+        <td class="align-left">
+        {% set color_class = remote.status_color if remote.status_color in ['red', 'orange', 'green'] else 'status-default' %}
+
+        <span class="{{ color_class }}">{{ remote.status }}</span>
+        </td>
+
+          <td class="align-left">{{ remote.status_extra }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="5">No remote servers available</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endfor %}
+
+</div>
+
+
+
 
     <footer>
         Source server: {{ report_misp_server }}<br />

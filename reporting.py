@@ -36,10 +36,12 @@ def main(config):
     data.get_ttp()
     data.get_vulnerabilities()
     data.get_curation()
-    data.get_infrastructure()
+
     data.get_misp_statistics()
     data.get_contributors()
 
+    data.get_infrastructure()
+    
     reporting = Reporting(config, logger, data.data)
     reporting.write_index()
     reporting.render_report()

@@ -17,6 +17,9 @@ config = {
         "misp_verifycert": False,
         "misp_key": "",
         "misp_page_size": 200,
+
+        "misp_infrastructure_monitor": [],
+                
         "cve_url": "https://cvepremium.circl.lu/api/cve/",
         "vulnerability_lookup_url": "https://vulnerability.circl.lu/vuln/",
 

@@ -41,6 +41,8 @@ class ReportingData():
         self.filter_ttp_actors = self.config["filter_ttp_actors"]
         self.filter_ttp_pattern = self.config["filter_ttp_pattern"]
 
+        self.misp_infrastructure_monitor = self.config["misp_infrastructure_monitor"]
+
     def print(self):
         print(self.data)
 
@@ -428,6 +430,112 @@ class ReportingData():
 
     def get_infrastructure(self):
         self.logger.debug("Started {}".format(inspect.currentframe().f_code.co_name))
+        self.data["infrastructure_misp"] = False
+        results = {}
+
+        for entry in self.misp_infrastructure_monitor:
+            for name, config in entry.items():
+                self.logger.info("Checking MISP server: {}".format(name))
+                results[name] = {
+                    "url": config.get("misp_url", False),
+                    "status": {},
+                    "server": {},
+                    "remote_servers": []
+                }
+                try:
+                    misp_server = PyMISP(config["misp_url"], config["misp_key"], config["misp_verifycert"])
+                    if not misp_server:
+                        self.logger.error("Unable to connect to MISP server: {}".format(name))
+                        results[name]["status"] = "ERROR"
+                        results[name]["remote_servers"] = []
+                        continue
+
+                    server_settings = misp_server.server_settings()
+                    if server_settings:
+                        self.logger.info("MISP server {} is reachable".format(name))
+                        workers = server_settings.get("workers", {})
+                        workers_report = {"cache": "ERROR", "default": "ERROR"}
+                        if "cache" in workers and workers["cache"].get("ok") is True:
+                            workers_report["cache"] = "OK"
+                        if "default" in workers and workers["default"].get("ok") is True:
+                            workers_report["default"] = "OK"
+                        server = {
+                            "version": server_settings["version"]["current"],
+                            "zmqStatus": server_settings.get("zmqStatus"),
+                            "moduleStatus_enrichment": server_settings["moduleStatus"].get("Enrichment"),
+                            "moduleStatus_import": server_settings["moduleStatus"].get("Import"),
+                            "moduleStatus_export": server_settings["moduleStatus"].get("Export"),
+                            "workers": workers_report
+                        }
+                        results[name]["status"] = "OK"
+                        results[name]["server"] = server
+
+                    remote_servers = misp_server.servers(pythonify=True)
+                    results_remote_servers = []
+                    for server in remote_servers:
+                        self.logger.info("Checking remote MISP server: {}".format(server["name"]))
+                        try:
+                            server_status = misp_server.test_server(server)
+                            status_message = ""
+                            status_message_extra = ""
+                            status_color = None
+                            if "status" in server_status:
+                                status = server_status["status"]
+                                if status == 1:
+                                    status_message = "OK"
+                                    status_color = "green"
+                                elif status == 2:
+                                    status_message = "Server unreachable"
+                                    status_message_extra = "There seems to be a connection issue. Make sure that the entered URL is correct and that the certificates are in order."
+                                    status_color = "red"
+                                elif status == 3:
+                                    status_message = "Unexpected error"
+                                    status_message_extra = "The server returned an unexpected result. Make sure that the provided URL (or certificate if it applies) are correct."
+                                    status_color = "red"
+                                elif status == 4:
+                                    status_message = "Authentication failed"
+                                    status_message_extra = "Authentication failed due to incorrect authentication key or insufficient privileges on the remote instance."
+                                    status_color = "red"
+                                elif status == 5:
+                                    status_message = "Password change required"
+                                    status_message_extra = "Authentication failed because the sync user is expected to change passwords. Log into the remote MISP to rectify this."
+                                    status_color = "red"
+                                elif status == 6:
+                                    status_message = "Terms not accepted"
+                                    status_message_extra = "Authentication failed because the sync user on the remote has not accepted the terms of use. Log into the remote MISP to rectify this."
+                                    status_color = "red"
+                                elif status == 7:
+                                    status_message = "Remote user not a sync user, only pulling events is available"
+                                    status_color = "orange"
+                                elif status == 8:
+                                    status_message = "Remote user not a sync user, only pulling events is available. Pushing available for sightings only"
+                                    status_color = "orange"
+                            results_remote_servers.append({
+                                "name": server["name"],
+                                "url": server["url"],
+                                "status": status_message,
+                                "status_color": status_color,
+                                "status_extra": status_message_extra,
+                                "id": server["id"],
+                            })
+                        except Exception as e:
+                            self.logger.error("Error checking remote server {}: {}".format(server["name"], e))
+                            results_remote_servers.append({
+                                "name": server["name"],
+                                "url": server["url"],
+                                "status": "ERROR",
+                                "status_color": "red",
+                                "status_extra": str(e),
+                                "id": server.get("id", None),
+                            })
+                    results[name]["remote_servers"] = results_remote_servers
+
+                except Exception as e:
+                    self.logger.error("Unable to connect to MISP server {}: {}".format(name, e))
+                    results[name]["status"] = "ERROR"
+                    results[name]["remote_servers"] = []
+
+        self.data["infrastructure_misp"] = results
 
     def _process_get_statistics_keyorgs(self, response, period):
         for event in response:

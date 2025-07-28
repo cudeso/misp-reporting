@@ -135,3 +135,17 @@ h2 span.sub_h2 {
     font-style: italic;
     font-weight: normal;
 }
+
+.red {
+  color: #d9534f; /* Bootstrap-style red */
+}
+.orange {
+  color: #f0ad4e; /* Bootstrap-style orange */
+}
+.green {
+  color: #5cb85c; /* Bootstrap-style green */
+}
+
+.status-default {
+  color: #333; /* Default text colour */
+}

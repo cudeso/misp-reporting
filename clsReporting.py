@@ -96,6 +96,7 @@ class Reporting:
             report_timestamp=datetime.now().strftime('%Y%m%d %H%M%S'),
             report_timestamp_hm=datetime.now().strftime('%Y-%m-%d'),
             report_misp_server=self.report_misp_server,
+            report_misp_results=self.data.get("infrastructure_misp", {}),
             
         )
 
