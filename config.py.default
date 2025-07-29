@@ -18,7 +18,11 @@ config = {
         "misp_key": "",
         "misp_page_size": 200,
 
-        "misp_infrastructure_monitor": [],
+        "misp_infrastructure_monitor": [
+                #{
+                #"servername": {"misp_url": "https://misp", "misp_verifycert": False, "misp_key": "1111111111111111111111111111111111111111"},
+                #}
+        ],
                 
         "cve_url": "https://cvepremium.circl.lu/api/cve/",
         "vulnerability_lookup_url": "https://vulnerability.circl.lu/vuln/",

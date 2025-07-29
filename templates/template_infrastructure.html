@@ -46,6 +46,7 @@
         <th>Status</th>
         <th>Version</th>
         <th>ZMQ</th>
+        <th>Redis</th>
         <th>Enrichment</th>
         <th>Import</th>
         <th>Export</th>
@@ -68,6 +69,7 @@
         {% if server_info.status == "OK" %}
           <td>{{ server_info.server.version }}</td>
           <td>{% if server_info.server.zmqStatus == 0 %}✅{% else %}❌{% endif %}</td>
+          <td>{% if server_info.server.redis == "OK" %}✅{% else %}❌{% endif %}</td>
           <td>{% if server_info.server.moduleStatus_enrichment == 0 %}✅{% else %}❌{% endif %}</td>
           <td>{% if server_info.server.moduleStatus_import == 0 %}✅{% else %}❌{% endif %}</td>
           <td>{% if server_info.server.moduleStatus_export == 0 %}✅{% else %}❌{% endif %}</td>

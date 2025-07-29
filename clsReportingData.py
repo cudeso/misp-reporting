@@ -41,7 +41,9 @@ class ReportingData():
         self.filter_ttp_actors = self.config["filter_ttp_actors"]
         self.filter_ttp_pattern = self.config["filter_ttp_pattern"]
 
-        self.misp_infrastructure_monitor = self.config["misp_infrastructure_monitor"]
+        self.misp_infrastructure_monitor = [{"This server": {"misp_url": self.config["misp_url"],
+                                                             "misp_verifycert": self.config["misp_verifycert"],
+                                                             "misp_key": self.config["misp_key"]}}] + self.config["misp_infrastructure_monitor"]
 
     def print(self):
         print(self.data)
@@ -451,21 +453,26 @@ class ReportingData():
                         continue
 
                     server_settings = misp_server.server_settings()
+
                     if server_settings:
                         self.logger.info("MISP server {} is reachable".format(name))
                         workers = server_settings.get("workers", {})
                         workers_report = {"cache": "ERROR", "default": "ERROR"}
+                        redis_report = "ERROR"
                         if "cache" in workers and workers["cache"].get("ok") is True:
                             workers_report["cache"] = "OK"
                         if "default" in workers and workers["default"].get("ok") is True:
                             workers_report["default"] = "OK"
+                        if "redisInfo" in server_settings and server_settings["redisInfo"].get("connection") is True:
+                            redis_report = "OK"
                         server = {
                             "version": server_settings["version"]["current"],
                             "zmqStatus": server_settings.get("zmqStatus"),
                             "moduleStatus_enrichment": server_settings["moduleStatus"].get("Enrichment"),
                             "moduleStatus_import": server_settings["moduleStatus"].get("Import"),
                             "moduleStatus_export": server_settings["moduleStatus"].get("Export"),
-                            "workers": workers_report
+                            "workers": workers_report,
+                            "redis": redis_report
                         }
                         results[name]["status"] = "OK"
                         results[name]["server"] = server
