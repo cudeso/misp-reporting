@@ -337,15 +337,30 @@ class ReportingData():
 
         for cve in tmp_data:
             cve_url = self.config["cve_url"]
+            cvss_base_score = "?"
+            cve_summary = ""            
             try:
                 response = requests.get(f"{cve_url}/{cve}")
                 cve_data = response.json()
-                cvss_base_score = cve_data["containers"]["cna"]["metrics"][0]["cvssV3_1"]["baseScore"]
-                cve_summary = cve_data["containers"]["cna"]["descriptions"][0]["value"]
+
+                containers = cve_data.get("containers", {})
+                cna = containers.get("cna", False)  # CVE Numbering Authorities
+                cve_summary = cna["descriptions"][0]["value"]
+                adp = containers.get("adp", False)  # Authorized Data Publisher
+                if cna and "metrics" in cna and "cvssV3_1" in cna["metrics"][0]:
+                    cvss_base_score = cna["metrics"][0]["cvssV3_1"]["baseScore"]
+                elif adp:
+                    for section in adp:
+                        metrics = section.get("metrics", [])
+                        for metric in metrics:
+                            if "cvssV3_1" in metric:
+                                cvss_base_score = metric["cvssV3_1"]["baseScore"]
+                                break
+                        else:
+                            continue
+                        break
             except Exception as e:
                 self.logger.debug("Unable to get CVE details for {} - {}".format(cve, e))
-                cvss_base_score = "?"
-                cve_summary = ""
             entry = {"count": tmp_data[cve], "summary": cve_summary, "cvss3": cvss_base_score}
             self.data["vulnerabilities"][cve] = entry
 
@@ -649,7 +664,8 @@ class ReportingData():
 
         filtered_statistics_attributes = {
             key: value[1]
-            for key, value in self.data["statistics-attributes"].items()
+            #for key, value in self.data["statistics-attributes"].items()
+            for key, value in self.data.get("statistics-attributes", {}).items()
         }
 
         self.statistics = statistics
