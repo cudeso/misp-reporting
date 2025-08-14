@@ -468,6 +468,11 @@ class ReportingData():
                         continue
 
                     server_settings = misp_server.server_settings()
+                    if "errors" in server_settings:
+                        results[name]["status"] = "ERROR"
+                        results[name]["server"] = config["misp_url"]
+                        self.logger.error("Unable to access {}, {}".format(config["misp_url"], server_settings))
+                        continue
 
                     if server_settings:
                         self.logger.info("MISP server {} is reachable".format(name))
