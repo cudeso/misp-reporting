@@ -280,6 +280,7 @@
     </div>
 
     <div class="container">
+        {% if show_geo_targeting %}
         <h2>Geo target information of {{reporting_filter_timestamp}} events ({{ reporting_period }})</h2>
         <div class="chart">
             <img src="{{ geo_targeting_map_path }}" alt="Geo targeting map">
@@ -300,6 +301,7 @@
                 {% endfor %}
             </tbody>
         </table>
+        {% endif %}
         <h2>Sector targeting of {{reporting_filter_timestamp}} events ({{ reporting_period }})</h2>
         <div class="chart">
             <img src="{{ sector_targeting_bar_chart_path }}" alt="Sector targeting">

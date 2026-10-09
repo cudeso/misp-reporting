@@ -4,3 +4,5 @@ venv/*
 venv/
 misp-reporting.log
 misp-reporting/
+__pycache__/
+tests/__pycache__/

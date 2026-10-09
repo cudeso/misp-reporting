@@ -35,6 +35,7 @@ CONFIG = {
     "misp_timeout": 300,
     "cve_timeout": 10,
     "reporting_vulnerabilities": True,
+    "reporting_geo_targeting": True,
     "misp_infrastructure_monitor": [],
     "cve_url": "https://cve.test/api/cve/",
     "attribute_summary": {"network": ["ip-src", "ip-dst"], "hashes": ["sha256", "md5"], "vulnerability": ["vulnerability"]},
@@ -230,6 +231,15 @@ class VulnerabilitiesTest(unittest.TestCase):
         self.assertEqual(get.call_args.kwargs["timeout"], 10)
         self.assertEqual(get.call_args.args[0], "https://cve.test/api/cve/CVE-2025-0001")
         self.assertEqual(data.data["vulnerabilities"]["CVE-2025-0001"]["cvss3"], "?")
+
+
+class GeoTargetingTest(unittest.TestCase):
+    def test_disabled_skips_search(self):
+        data, _ = make_data(EVENTS, reporting_geo_targeting=False)
+        with mock.patch.object(data, "_get_data_for_reporting_period") as get:
+            data.get_target_geo()
+        get.assert_not_called()
+        self.assertEqual(data.data["targeting-geo"], {})
 
 
 class CurationTest(unittest.TestCase):

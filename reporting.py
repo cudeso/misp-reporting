@@ -22,6 +22,7 @@ from clsReportingStatistics import *
 DEFAULT_SETTINGS = {"misp_timeout": 300,
                     "cve_timeout": 10,
                     "reporting_vulnerabilities": True,
+                    "reporting_geo_targeting": True,
                     "reporting_contributors": False,
                     "reporting_curated_events": True,
                     "chart_theme": "orange",

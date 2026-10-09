@@ -30,6 +30,7 @@ config = {
 
         "reporting_cve_highlight": 7,
         "reporting_vulnerabilities": True,
+        "reporting_geo_targeting": True,
         "reporting_contributors": False,
         "reporting_curated_events": True,
         "cve_timeout": 10,

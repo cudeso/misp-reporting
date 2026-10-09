@@ -516,7 +516,9 @@ class Reporting:
 
         # ###############  Targeting geo
         key = "targeting-geo"
-        if key in self.data and len(self.data[key]) > 0:
+        if not self.config["reporting_geo_targeting"]:
+            self.data_for_report[key] = {}
+        elif key in self.data and len(self.data[key]) > 0:
             dataset = self.data[key]
             sorted_data = dict(sorted(dataset.items(), key=lambda item: item[1], reverse=True))
             if self.config["filter_geo_count"] > 0:
@@ -645,6 +647,7 @@ class Reporting:
             reporting_filter_timestamp=reporting_filter_timestamp,
             vulnerability_lookup_url=self.config["vulnerability_lookup_url"].rstrip("/"),
             show_vulnerabilities=self.config["reporting_vulnerabilities"],
+            show_geo_targeting=self.config["reporting_geo_targeting"],
             attributes_with_ids_or_not=attributes_with_ids_or_not,
             cve_highlight=self.config["reporting_cve_highlight"],
         )

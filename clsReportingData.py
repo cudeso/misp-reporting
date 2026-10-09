@@ -265,6 +265,9 @@ class ReportingData():
     def get_target_geo(self):
         self.logger.debug("Started {}".format(inspect.currentframe().f_code.co_name))
         self.data["targeting-geo"] = {}
+        if not self.config["reporting_geo_targeting"]:
+            self.logger.info("Skipping geo targeting, disabled with reporting_geo_targeting")
+            return
         response = self._get_data_for_reporting_period()
         for event in response:
             tags = event["Event"].get("Tag", [])

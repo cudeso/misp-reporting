@@ -211,6 +211,8 @@ MISP connection settings follow. Provide the instance URL, whether to verify the
 
 Set `reporting_vulnerabilities` to `False` to leave out the section on vulnerabilities and weaknesses. The CVE details are then not looked up either, which saves one request to `cve_url` per CVE. `cve_timeout` limits how long each of these lookups may take, in seconds.
 
+Set `reporting_geo_targeting` to `False` to leave out the section on geo target information. The map `geo_targeting_map.png` is then not created, so the report no longer needs Kaleido and the headless Chrome browser it starts.
+
 The page with the top contributors is off by default. Set `reporting_contributors` to `True` to collect its data and add it to the navigation bar. While it is off, a `misp_contributors.html` left by an earlier run stays in the output directory until you remove it.
 
 ```
@@ -224,6 +226,7 @@ The page with the top contributors is off by default. Set `reporting_contributor
 
         "reporting_cve_highlight": 7,
         "reporting_vulnerabilities": True,
+        "reporting_geo_targeting": True,
         "reporting_contributors": False,
         "reporting_curated_events": True,
         "cve_timeout": 10,
