@@ -354,6 +354,9 @@ class ReportingData():
                 if published_7d:
                     self.data["curation_complete_7d"].append(entry)
                 continue
+            # Without a workflow tag the server is still processing the event
+            if self.workflow_incomplete not in tag_names:
+                continue
 
             if self.config["log_incomplete"]:
                 self.logger.debug("Consider event {} {} as incomplete".format(event["Event"]["id"], event["Event"]["info"]))

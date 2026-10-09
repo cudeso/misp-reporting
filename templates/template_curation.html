@@ -44,9 +44,9 @@
             <tbody>
                 <tr>
                     <td class="align-right">{{ curation_incomplete_today_count }}
-                        <br /><a href='{{ report_misp_server }}/events/index/searchtag:!workflow:state="complete"'>Events</a></td>
+                        <br /><a href='{{ report_misp_server }}/events/index/searchtag:workflow:state="incomplete"'>Events</a></td>
                     <td class="align-right">{{ curation_incomplete_high_count }}
-                        <br /><a href='{{ report_misp_server }}/events/index/searchtag:!workflow:state="complete"/searchthreatlevel:1'>Events</a></td>
+                        <br /><a href='{{ report_misp_server }}/events/index/searchtag:workflow:state="incomplete"/searchthreatlevel:1'>Events</a></td>
                     <td class="align-right">{{ curation_incomplete_adm_high_count}}
                         <br /><a href='{{ report_misp_server }}/events/index/searchtag:admiralty-scale:source-reliability="a"/searchpublished:0'>Events</a></td>
                 </tr>

@@ -250,15 +250,18 @@ class GeoTargetingTest(unittest.TestCase):
         self.assertEqual(data.data["targeting-geo"], {})
 
 
+INCOMPLETE = "workflow:state=\"incomplete\""
+
+
 class CurationTest(unittest.TestCase):
     def test_waiting_events_sorted_most_recent_first(self):
         events = [
-            event(20, 3600, threat_level="1", date="2025-09-01", tags=["admiralty-scale:source-reliability=\"a\""]),
-            event(21, 7200, threat_level="1", date="2025-10-05", tags=["admiralty-scale:source-reliability=\"a\""]),
-            event(22, 600, threat_level="1", date="2025-10-05"),
+            event(20, 3600, threat_level="1", date="2025-09-01", tags=[INCOMPLETE, "admiralty-scale:source-reliability=\"a\""]),
+            event(21, 7200, threat_level="1", date="2025-10-05", tags=[INCOMPLETE, "admiralty-scale:source-reliability=\"a\""]),
+            event(22, 600, threat_level="1", date="2025-10-05", tags=[INCOMPLETE]),
             event(23, 900, threat_level="1", date="2025-10-07", tags=["workflow:state=\"complete\""]),
-            event(24, 3 * DAY, threat_level="1", date="2025-10-08"),
-            event(25, 8 * DAY, threat_level="1", date="2025-10-09", tags=["admiralty-scale:source-reliability=\"a\""]),
+            event(24, 3 * DAY, threat_level="1", date="2025-10-08", tags=[INCOMPLETE]),
+            event(25, 8 * DAY, threat_level="1", date="2025-10-09", tags=[INCOMPLETE, "admiralty-scale:source-reliability=\"a\""]),
         ]
         data, _ = make_data(events)
         data.get_curation()
@@ -267,17 +270,36 @@ class CurationTest(unittest.TestCase):
         self.assertEqual([e["id"] for e in data.data["curation_complete"]], ["23"])
 
     def test_last_7d_counts(self):
-        data, _ = make_data(EVENTS)
+        events = [
+            event(40, 3600, tags=["workflow:state=\"complete\""]),
+            event(41, 2 * DAY, tags=[INCOMPLETE]),
+            event(42, 600, published=False, tags=[INCOMPLETE]),
+            event(43, 8 * DAY, tags=[INCOMPLETE]),
+        ]
+        data, _ = make_data(events)
         data.get_curation()
-        self.assertEqual([e["id"] for e in data.data["curation_complete_7d"]], ["1"])
-        self.assertEqual([e["id"] for e in data.data["curation_incomplete_7d"]], ["2", "9"])
-        self.assertEqual([e["id"] for e in data.data["curation_incomplete_today"]], [])
+        self.assertEqual([e["id"] for e in data.data["curation_complete_7d"]], ["40"])
+        self.assertEqual([e["id"] for e in data.data["curation_incomplete_7d"]], ["41", "42"])
+        self.assertEqual([e["id"] for e in data.data["curation_incomplete_today"]], ["42"])
+        self.assertEqual([e["id"] for e in data.data["curation_incomplete"]], ["41", "42", "43"])
+
+    def test_events_without_workflow_tag_are_not_listed(self):
+        events = [
+            event(50, 600, threat_level="1", tags=["admiralty-scale:source-reliability=\"a\""]),
+            event(51, 600, published=False, threat_level="1"),
+            event(52, 600, threat_level="1", tags=[INCOMPLETE]),
+        ]
+        data, _ = make_data(events)
+        data.get_curation()
+        self.assertEqual([e["id"] for e in data.data["curation_incomplete"]], ["52"])
+        self.assertEqual([e["id"] for e in data.data["curation_incomplete_high"]], ["52"])
+        self.assertEqual(data.data["curation_incomplete_adm_high"], [])
 
     def test_rejected_events_are_not_counted(self):
         events = [
             event(30, 600, published=False, threat_level="1", tags=["workflow:state=\"rejected\"", "admiralty-scale:source-reliability=\"a\""]),
             event(31, 600, tags=["workflow:state=\"complete\"", "workflow:state=\"rejected\""]),
-            event(32, 600, threat_level="1"),
+            event(32, 600, threat_level="1", tags=[INCOMPLETE]),
         ]
         data, _ = make_data(events)
         data.get_curation()
@@ -287,7 +309,9 @@ class CurationTest(unittest.TestCase):
         self.assertEqual(data.data["curation_complete"], [])
 
     def test_curation_does_not_change_published_data_used_by_contributors(self):
-        data, _ = make_data(EVENTS)
+        events = copy.deepcopy(EVENTS)
+        events[8]["Event"]["Tag"].append({"name": INCOMPLETE})
+        data, _ = make_data(events)
         before = [e["Event"]["id"] for e in data._get_data_for_reporting_period()]
         data.get_curation()
         self.assertIn("9", [e["id"] for e in data.data["curation_incomplete"]])
