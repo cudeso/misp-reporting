@@ -56,7 +56,7 @@ def attribute(attr_type, to_ids, value="x"):
     return {"type": attr_type, "to_ids": to_ids, "value": value}
 
 
-def event(event_id, age, published=True, attributes=(), objects=(), tags=(), threat_level="2", date="2025-10-01"):
+def event(event_id, age, published=True, attributes=(), objects=(), tags=(), threat_level="2", date="2025-10-01", local_tags=()):
     return {"Event": {"id": str(event_id), "date": date, "info": "Event {}".format(event_id),
                       "published": published, "publish_timestamp": str(NOW - age),
                       "timestamp": str(NOW - age), "threat_level_id": threat_level,
@@ -64,7 +64,7 @@ def event(event_id, age, published=True, attributes=(), objects=(), tags=(), thr
                       "Orgc": {"name": "Org {}".format(event_id % 2), "uuid": "uuid-{}".format(event_id % 2), "id": str(event_id % 2)},
                       "Attribute": list(attributes),
                       "Object": [{"Attribute": list(o)} for o in objects],
-                      "Tag": [{"name": t} for t in tags]}}
+                      "Tag": [{"name": t, "local": False} for t in tags] + [{"name": t, "local": True} for t in local_tags]}}
 
 
 class FakeMISP:
@@ -251,17 +251,18 @@ class GeoTargetingTest(unittest.TestCase):
 
 
 INCOMPLETE = "workflow:state=\"incomplete\""
+ADMIRALTY_A = "admiralty-scale:source-reliability=\"a\""
 
 
 class CurationTest(unittest.TestCase):
     def test_waiting_events_sorted_most_recent_first(self):
         events = [
-            event(20, 3600, threat_level="1", date="2025-09-01", tags=[INCOMPLETE, "admiralty-scale:source-reliability=\"a\""]),
-            event(21, 7200, threat_level="1", date="2025-10-05", tags=[INCOMPLETE, "admiralty-scale:source-reliability=\"a\""]),
+            event(20, 3600, threat_level="1", date="2025-09-01", tags=[INCOMPLETE], local_tags=[ADMIRALTY_A]),
+            event(21, 7200, threat_level="1", date="2025-10-05", tags=[INCOMPLETE], local_tags=[ADMIRALTY_A]),
             event(22, 600, threat_level="1", date="2025-10-05", tags=[INCOMPLETE]),
             event(23, 900, threat_level="1", date="2025-10-07", tags=["workflow:state=\"complete\""]),
             event(24, 3 * DAY, threat_level="1", date="2025-10-08", tags=[INCOMPLETE]),
-            event(25, 8 * DAY, threat_level="1", date="2025-10-09", tags=[INCOMPLETE, "admiralty-scale:source-reliability=\"a\""]),
+            event(25, 8 * DAY, threat_level="1", date="2025-10-09", tags=[INCOMPLETE], local_tags=[ADMIRALTY_A]),
         ]
         data, _ = make_data(events)
         data.get_curation()
@@ -285,7 +286,7 @@ class CurationTest(unittest.TestCase):
 
     def test_events_without_workflow_tag_are_not_listed(self):
         events = [
-            event(50, 600, threat_level="1", tags=["admiralty-scale:source-reliability=\"a\""]),
+            event(50, 600, threat_level="1", local_tags=[ADMIRALTY_A]),
             event(51, 600, published=False, threat_level="1"),
             event(52, 600, threat_level="1", tags=[INCOMPLETE]),
         ]
@@ -295,9 +296,18 @@ class CurationTest(unittest.TestCase):
         self.assertEqual([e["id"] for e in data.data["curation_incomplete_high"]], ["52"])
         self.assertEqual(data.data["curation_incomplete_adm_high"], [])
 
+    def test_admiralty_scale_only_as_local_tag(self):
+        events = [
+            event(60, 600, tags=[INCOMPLETE, ADMIRALTY_A]),
+            event(61, 600, tags=[INCOMPLETE], local_tags=[ADMIRALTY_A]),
+        ]
+        data, _ = make_data(events)
+        data.get_curation()
+        self.assertEqual([e["id"] for e in data.data["curation_incomplete_adm_high"]], ["61"])
+
     def test_rejected_events_are_not_counted(self):
         events = [
-            event(30, 600, published=False, threat_level="1", tags=["workflow:state=\"rejected\"", "admiralty-scale:source-reliability=\"a\""]),
+            event(30, 600, published=False, threat_level="1", tags=["workflow:state=\"rejected\""], local_tags=[ADMIRALTY_A]),
             event(31, 600, tags=["workflow:state=\"complete\"", "workflow:state=\"rejected\""]),
             event(32, 600, threat_level="1", tags=[INCOMPLETE]),
         ]

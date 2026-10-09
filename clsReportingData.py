@@ -342,6 +342,7 @@ class ReportingData():
                      "info": event["Event"]["info"][:30],
                      "indicators":  event["Event"]["attribute_count"]}
             tag_names = [tag["name"] for tag in event["Event"].get("Tag", [])]
+            local_tag_names = [tag["name"] for tag in event["Event"].get("Tag", []) if tag.get("local")]
             if self.workflow_rejected in tag_names:
                 continue
             published_today = int(event["Event"]["publish_timestamp"]) >= since
@@ -367,7 +368,8 @@ class ReportingData():
                 self.data["curation_incomplete_7d"].append(entry)
                 if event["Event"]["threat_level_id"] == "1":
                     self.data["curation_incomplete_high"].append(entry)
-                if "admiralty-scale:source-reliability=\"a\"" in tag_names:
+                # Only the reliability set locally by our curation counts
+                if "admiralty-scale:source-reliability=\"a\"" in local_tag_names:
                     self.data["curation_incomplete_adm_high"].append(entry)
 
         for key in ["curation_incomplete_high", "curation_incomplete_adm_high"]:

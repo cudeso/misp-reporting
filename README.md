@@ -141,7 +141,7 @@ The opening section lists how many events published in the last 24 hours are awa
 
 ![docs/misp-reporting-curation-1.png](docs/misp-reporting-curation-1.png)
 
-Next, two tables list the events published in the last 7 days that are still waiting for curation, first those with a high threat level and then those from completely reliable sources (Admiralty scale A). Both are sorted on event date, the most recent first, to help you prioritise urgent reviews. A last table lists the curated events of the reporting period. On a busy server this list can make the page large; set `reporting_curated_events` to `False` to leave it out. For automation ideas see the MISP playbook [Curate threat events](https://misp.github.io/misp-playbooks/misp-playbooks/pb_curate_misp_events-with_output.html).
+Next, two tables list the events published in the last 7 days that are still waiting for curation, first those from completely reliable sources (Admiralty scale A) and then those with a high threat level. Only a local Admiralty scale tag counts, as set by your own curation; the same tag received from another organisation is ignored. Both are sorted on event date, the most recent first, to help you prioritise urgent reviews. A last table lists the curated events of the reporting period. On a busy server this list can make the page large; set `reporting_curated_events` to `False` to leave it out. For automation ideas see the MISP playbook [Curate threat events](https://misp.github.io/misp-playbooks/misp-playbooks/pb_curate_misp_events-with_output.html).
 
 ![docs/misp-reporting-curation-4.png](docs/misp-reporting-curation-4.png)
 

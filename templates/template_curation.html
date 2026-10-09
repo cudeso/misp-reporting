@@ -92,32 +92,6 @@
     </div>
 
     <div class="container">
-        <h2>Events waiting for curation - Threat level high <span class="sub_h2">(published in the last 7d, most recent event date first)</span></h2>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>ID</th>                    
-                    <th>Date</th>
-                    <th>Organisation</th>
-                    <th>Event title</th>
-                    <th>Attributes</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for event in curation_incomplete_high %}
-                <tr>
-                    <td><a href="{{ report_misp_server }}/events/view/{{ event.id }}">{{ event.id }}</a></td>                    
-                    <td>{{ event.date }}</td>
-                    <td class="align-left">{{ event.org }}</td>
-                    <td class="align-left">{{ event.info }}</td>
-                    <td class="align-right">{{ event.indicators }}</td>               
-                </tr>
-                {% else %}
-                <tr><td colspan="5" class="empty-state">No high threat level events waiting for curation in the last 7d</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-
         <h2>Events waiting for curation - Admiralty scale : Source Reliability: Completely reliable (A) <span class="sub_h2">(published in the last 7d, most recent event date first)</span></h2>
         <table class="table">
             <thead>
@@ -140,6 +114,32 @@
                 </tr>
                 {% else %}
                 <tr><td colspan="5" class="empty-state">No events from completely reliable sources waiting for curation in the last 7d</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h2>Events waiting for curation - Threat level high <span class="sub_h2">(published in the last 7d, most recent event date first)</span></h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>                    
+                    <th>Date</th>
+                    <th>Organisation</th>
+                    <th>Event title</th>
+                    <th>Attributes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in curation_incomplete_high %}
+                <tr>
+                    <td><a href="{{ report_misp_server }}/events/view/{{ event.id }}">{{ event.id }}</a></td>                    
+                    <td>{{ event.date }}</td>
+                    <td class="align-left">{{ event.org }}</td>
+                    <td class="align-left">{{ event.info }}</td>
+                    <td class="align-right">{{ event.indicators }}</td>               
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="empty-state">No high threat level events waiting for curation in the last 7d</td></tr>
                 {% endfor %}
             </tbody>
         </table>
