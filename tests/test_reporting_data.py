@@ -233,6 +233,14 @@ class VulnerabilitiesTest(unittest.TestCase):
         self.assertEqual(data.data["vulnerabilities"]["CVE-2025-0001"]["cvss3"], "?")
 
 
+class RequestGetTest(unittest.TestCase):
+    def test_url_has_single_slash(self):
+        data, _ = make_data(EVENTS, misp_url="https://misp.test/")
+        with mock.patch.object(clsReportingData.requests, "get") as get:
+            data._request_get("/users/statistics")
+        self.assertEqual(get.call_args.args[0], "https://misp.test/users/statistics")
+
+
 class GeoTargetingTest(unittest.TestCase):
     def test_disabled_skips_search(self):
         data, _ = make_data(EVENTS, reporting_geo_targeting=False)

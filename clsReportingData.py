@@ -560,15 +560,16 @@ class ReportingData():
         return self.data_for_today
 
     def _request_get(self, endpoint):
-        response = requests.get("{}/{}".format(self.config["misp_url"], endpoint), headers=self.misp_headers, verify=self.config["misp_verifycert"], timeout=self.misp_timeout)
+        url = "{}/{}".format(self.config["misp_url"].rstrip("/"), endpoint.lstrip("/"))
+        response = requests.get(url, headers=self.misp_headers, verify=self.config["misp_verifycert"], timeout=self.misp_timeout)
         if response.ok:
             return response
         elif 400 <= response.status_code < 500:
-            self.logger.error(f"[{response.status_code}] Client Error: {response.reason}")
+            self.logger.error(f"[{response.status_code}] Client Error: {response.reason} for {endpoint}")
         elif 500 <= response.status_code < 600:
-            self.logger.error(f"[{response.status_code}] Server Error: {response.reason}")
+            self.logger.error(f"[{response.status_code}] Server Error: {response.reason} for {endpoint}")
         else:
-            self.logger.error(f"[{response.status_code}] Other: {response.reason}")
+            self.logger.error(f"[{response.status_code}] Other: {response.reason} for {endpoint}")
         return False
     
     def get_misp_statistics(self):
