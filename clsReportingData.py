@@ -45,6 +45,7 @@ class ReportingData():
 
         self.workflow_complete = self.config["workflow_complete"]
         self.workflow_incomplete = self.config["workflow_incomplete"]
+        self.workflow_rejected = self.config["workflow_rejected"]
 
         self.filter_sector = self.config["filter_sector"]
         self.filter_geo = self.config["filter_geo"]
@@ -335,6 +336,8 @@ class ReportingData():
                      "info": event["Event"]["info"][:30],
                      "indicators":  event["Event"]["attribute_count"]}
             tag_names = [tag["name"] for tag in event["Event"].get("Tag", [])]
+            if self.workflow_rejected in tag_names:
+                continue
             published_today = int(event["Event"]["publish_timestamp"]) >= since
 
             if event["Event"]["published"] and self.workflow_complete in tag_names:

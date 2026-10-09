@@ -24,7 +24,8 @@ DEFAULT_SETTINGS = {"misp_timeout": 300,
                     "reporting_vulnerabilities": True,
                     "reporting_contributors": False,
                     "reporting_curated_events": True,
-                    "chart_theme": "orange"}
+                    "chart_theme": "orange",
+                    "workflow_rejected": "workflow:state=\"rejected\""}
 
 
 def main(config):

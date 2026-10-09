@@ -43,6 +43,7 @@ CONFIG = {
     "threatlevel_key_mapping": {'1': 'High', '2': 'Medium', '3': 'Low', '4': 'Undefined'},
     "workflow_complete": "workflow:state=\"complete\"",
     "workflow_incomplete": "workflow:state=\"incomplete\"",
+    "workflow_rejected": "workflow:state=\"rejected\"",
     "filter_sector": "misp-galaxy:sector",
     "filter_geo": "misp-galaxy:target-information",
     "filter_ttp_actors": ["misp-galaxy:threat-actor"],
@@ -245,6 +246,19 @@ class CurationTest(unittest.TestCase):
         self.assertEqual([e["id"] for e in data.data["curation_incomplete_high"]], ["22", "21", "20"])
         self.assertEqual([e["id"] for e in data.data["curation_incomplete_adm_high"]], ["21", "20"])
         self.assertEqual([e["id"] for e in data.data["curation_complete"]], ["23"])
+
+    def test_rejected_events_are_not_counted(self):
+        events = [
+            event(30, 600, published=False, threat_level="1", tags=["workflow:state=\"rejected\"", "admiralty-scale:source-reliability=\"a\""]),
+            event(31, 600, tags=["workflow:state=\"complete\"", "workflow:state=\"rejected\""]),
+            event(32, 600, threat_level="1"),
+        ]
+        data, _ = make_data(events)
+        data.get_curation()
+        self.assertEqual([e["id"] for e in data.data["curation_incomplete"]], ["32"])
+        self.assertEqual([e["id"] for e in data.data["curation_incomplete_high"]], ["32"])
+        self.assertEqual(data.data["curation_incomplete_adm_high"], [])
+        self.assertEqual(data.data["curation_complete"], [])
 
     def test_curation_does_not_change_published_data_used_by_contributors(self):
         data, _ = make_data(EVENTS)

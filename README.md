@@ -135,7 +135,7 @@ Finally, the report summarises all CVEs referenced in events. Additional details
 
 ## Curation report
 
-The curation report shows how many threat events have been curated—either automatically or manually. A typical **curation process** checks events against the MISP warninglists and the CIRCL Hashlookup service; matches lead to indicators being marked non‑actionable (the *to_ids* flag is cleared). Curation may also enrich events with contextual data. In this setup, curated events are placed in the local workflow state *complete*; uncurated events remain *incomplete*.
+The curation report shows how many threat events have been curated—either automatically or manually. A typical **curation process** checks events against the MISP warninglists and the CIRCL Hashlookup service; matches lead to indicators being marked non‑actionable (the *to_ids* flag is cleared). Curation may also enrich events with contextual data. In this setup, curated events are placed in the local workflow state *complete*; uncurated events remain *incomplete*. Events tagged with `workflow_rejected` (by default the workflow state *rejected*) are left out of the curation report, so they count as neither curated nor not curated.
 
 The opening section lists how many events are awaiting curation, how many high‑threat events are waiting, and how many events from completely reliable sources are pending. Links take you straight to each set in MISP.
 
@@ -285,5 +285,6 @@ Installation paths, templates, and appearance. `chart_theme` sets the colours of
         "tlp_ignore_graph": ['tlp:unclear', 'tlp:ex:chr', 'tlp:amber+strict'],
         "workflow_complete": "workflow:state=\"complete\"",
         "workflow_incomplete": "workflow:state=\"incomplete\"",
+        "workflow_rejected": "workflow:state=\"rejected\"",
 }
 ```

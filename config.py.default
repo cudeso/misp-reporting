@@ -76,5 +76,6 @@ config = {
         "tlp_ignore_graph": ['tlp:unclear', 'tlp:ex:chr', 'tlp:amber+strict'],
         "workflow_complete": "workflow:state=\"complete\"",
         "workflow_incomplete": "workflow:state=\"incomplete\"",
+        "workflow_rejected": "workflow:state=\"rejected\"",
 
         }
