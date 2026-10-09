@@ -323,14 +323,17 @@ class ReportingData():
         self.logger.debug("Started {}".format(inspect.currentframe().f_code.co_name))
         self.data["curation_complete"] = []
         self.data["curation_complete_today"] = []
+        self.data["curation_complete_7d"] = []
         self.data["curation_incomplete"] = []
         self.data["curation_incomplete_today"] = []
+        self.data["curation_incomplete_7d"] = []
         self.data["curation_incomplete_high"] = []
         self.data["curation_incomplete_adm_high"] = []
 
         # Curation covers published and unpublished events
         response = self._get_period_metadata()
         since = self.now - 86400
+        since_7d = self.now - 7 * 86400
 
         for event in response:
             entry = {"date": event["Event"]["date"],
@@ -342,11 +345,14 @@ class ReportingData():
             if self.workflow_rejected in tag_names:
                 continue
             published_today = int(event["Event"]["publish_timestamp"]) >= since
+            published_7d = int(event["Event"]["publish_timestamp"]) >= since_7d
 
             if event["Event"]["published"] and self.workflow_complete in tag_names:
                 self.data["curation_complete"].append(entry)
                 if published_today:
                     self.data["curation_complete_today"].append(entry)
+                if published_7d:
+                    self.data["curation_complete_7d"].append(entry)
                 continue
 
             if self.config["log_incomplete"]:
@@ -354,6 +360,8 @@ class ReportingData():
             self.data["curation_incomplete"].append(entry)
             if published_today:
                 self.data["curation_incomplete_today"].append(entry)
+            if published_7d:
+                self.data["curation_incomplete_7d"].append(entry)
                 if event["Event"]["threat_level_id"] == "1":
                     self.data["curation_incomplete_high"].append(entry)
                 if "admiralty-scale:source-reliability=\"a\"" in tag_names:

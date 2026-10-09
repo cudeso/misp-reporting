@@ -258,12 +258,20 @@ class CurationTest(unittest.TestCase):
             event(22, 600, threat_level="1", date="2025-10-05"),
             event(23, 900, threat_level="1", date="2025-10-07", tags=["workflow:state=\"complete\""]),
             event(24, 3 * DAY, threat_level="1", date="2025-10-08"),
+            event(25, 8 * DAY, threat_level="1", date="2025-10-09", tags=["admiralty-scale:source-reliability=\"a\""]),
         ]
         data, _ = make_data(events)
         data.get_curation()
-        self.assertEqual([e["id"] for e in data.data["curation_incomplete_high"]], ["22", "21", "20"])
+        self.assertEqual([e["id"] for e in data.data["curation_incomplete_high"]], ["24", "22", "21", "20"])
         self.assertEqual([e["id"] for e in data.data["curation_incomplete_adm_high"]], ["21", "20"])
         self.assertEqual([e["id"] for e in data.data["curation_complete"]], ["23"])
+
+    def test_last_7d_counts(self):
+        data, _ = make_data(EVENTS)
+        data.get_curation()
+        self.assertEqual([e["id"] for e in data.data["curation_complete_7d"]], ["1"])
+        self.assertEqual([e["id"] for e in data.data["curation_incomplete_7d"]], ["2", "9"])
+        self.assertEqual([e["id"] for e in data.data["curation_incomplete_today"]], [])
 
     def test_rejected_events_are_not_counted(self):
         events = [

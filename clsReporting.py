@@ -224,6 +224,8 @@ class Reporting:
         curation_complete_today_count = 0
         curation_incomplete_count = 0
         curation_incomplete_today_count = 0
+        curation_complete_7d_count = 0
+        curation_incomplete_7d_count = 0
         curation_complete_events = []
         curation_incomplete_events = []
         curation_incomplete_high_events = []
@@ -248,6 +250,13 @@ class Reporting:
             self.data_for_report["curation_complete_today"] = {}
             self.logger.error(" Not found: {}".format("curation_complete_today"))
 
+        if "curation_complete_7d" in self.data:
+            curation_complete_7d_count = len(self.data["curation_complete_7d"])
+            self.logger.debug(" Created {}".format("curation_complete_7d"))
+        else:
+            self.data_for_report["curation_complete_7d"] = {}
+            self.logger.error(" Not found: {}".format("curation_complete_7d"))
+
         key = "curation_incomplete"
         if key in self.data:
             dataset = self.data[key]
@@ -265,6 +274,13 @@ class Reporting:
         else:
             self.data_for_report["curation_incomplete_today"] = {}
             self.logger.error(" Not found: {}".format("curation_incomplete_today"))
+
+        if "curation_incomplete_7d" in self.data:
+            curation_incomplete_7d_count = len(self.data["curation_incomplete_7d"])
+            self.logger.debug(" Created {}".format("curation_incomplete_7d"))
+        else:
+            self.data_for_report["curation_incomplete_7d"] = {}
+            self.logger.error(" Not found: {}".format("curation_incomplete_7d"))
 
         if "curation_incomplete_high" in self.data:
             dataset = self.data["curation_incomplete_high"]
@@ -309,6 +325,8 @@ class Reporting:
             summary=self.data_for_report.get("statistics", {}),
             curation_incomplete_today_count=curation_incomplete_today_count,
             curation_complete_today_count=curation_complete_today_count,
+            curation_incomplete_7d_count=curation_incomplete_7d_count,
+            curation_complete_7d_count=curation_complete_7d_count,
             curation_complete_count=curation_complete_count,
             curation_incomplete_count=curation_incomplete_count,
 

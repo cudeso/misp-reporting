@@ -37,8 +37,8 @@
             <thead>
                 <tr>
                     <th>Not curated (24h)</th>
-                    <th>Not curated with threat level high (24h)</th>
-                    <th>Not curated from completely reliable sources (24h)</th>                    
+                    <th>Not curated with threat level high (7d)</th>
+                    <th>Not curated from completely reliable sources (7d)</th>                    
                 </tr>
             </thead>
             <tbody>
@@ -76,7 +76,12 @@
                     <td>Last 24h</td>
                     <td class="align-right">{{ curation_complete_today_count }}</td>
                     <td class="align-right">{{ curation_incomplete_today_count }}</td>
-                </tr>                
+                </tr>
+                <tr>
+                    <td>Last 7d</td>
+                    <td class="align-right">{{ curation_complete_7d_count }}</td>
+                    <td class="align-right">{{ curation_incomplete_7d_count }}</td>
+                </tr>
                 <tr>
                     <td>Last {{ reporting_period }}</td>
                     <td class="align-right">{{ curation_complete_count }}</td>
@@ -87,7 +92,7 @@
     </div>
 
     <div class="container">
-        <h2>Events waiting for curation - Threat level high <span class="sub_h2">(published in the last 24h, most recent event date first)</span></h2>
+        <h2>Events waiting for curation - Threat level high <span class="sub_h2">(published in the last 7d, most recent event date first)</span></h2>
         <table class="table">
             <thead>
                 <tr>
@@ -108,12 +113,12 @@
                     <td class="align-right">{{ event.indicators }}</td>               
                 </tr>
                 {% else %}
-                <tr><td colspan="5" class="empty-state">No high threat level events waiting for curation in the last 24h</td></tr>
+                <tr><td colspan="5" class="empty-state">No high threat level events waiting for curation in the last 7d</td></tr>
                 {% endfor %}
             </tbody>
         </table>
 
-        <h2>Events waiting for curation - Admiralty scale : Source Reliability: Completely reliable (A) <span class="sub_h2">(published in the last 24h, most recent event date first)</span></h2>
+        <h2>Events waiting for curation - Admiralty scale : Source Reliability: Completely reliable (A) <span class="sub_h2">(published in the last 7d, most recent event date first)</span></h2>
         <table class="table">
             <thead>
                 <tr>
@@ -134,7 +139,7 @@
                     <td class="align-right">{{ event.indicators }}</td>               
                 </tr>
                 {% else %}
-                <tr><td colspan="5" class="empty-state">No events from completely reliable sources waiting for curation in the last 24h</td></tr>
+                <tr><td colspan="5" class="empty-state">No events from completely reliable sources waiting for curation in the last 7d</td></tr>
                 {% endfor %}
             </tbody>
         </table>
