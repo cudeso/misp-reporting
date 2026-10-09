@@ -12,7 +12,17 @@ import plotly.express as px
 import matplotlib.cm as cm
 from matplotlib.ticker import MultipleLocator
 import numpy as np
-from collections import defaultdict
+
+
+# Chart colours for each stylesheet: a colour map for bars and the colours for trend lines
+CHART_THEMES = {
+    "orange": {"cmap": "Oranges", "line": "#FF6600", "line_pair": ["#ffcc00", "#ff1e00"]},
+    "blue": {"cmap": "Blues", "line": "#003366", "line_pair": ["#5b9bd5", "#003366"]},
+    "red": {"cmap": "RdPu", "line": "#802c59", "line_pair": ["#d48aa8", "#802c59"]},
+}
+
+TLP_COLOURS = {"tlp:red": "#d9534f", "tlp:amber": "#f0ad4e", "tlp:amber+strict": "#e67e22", "tlp:green": "#5cb85c",
+               "tlp:clear": "#e8e6e6", "no tlp": "#b0b0b0"}
 
 
 class Reporting:
@@ -42,7 +52,6 @@ class Reporting:
         self.tlp_pie_chart_path = os.path.join(self.output_dir, "tlp_pie_chart.png")
         self.geo_targeting_map_path = os.path.join(self.output_dir, "geo_targeting_map.png")
         self.sector_targeting_bar_chart_path = os.path.join(self.output_dir, "sector_targeting_bar_chart.png")
-        self.curated_events_bubble_path = os.path.join(self.output_dir, "curated_events_bubble_chart.png")
         self.noimage_path = self.config["noimage_path"]
 
         self.threatlevel_key_mapping = self.config["threatlevel_key_mapping"]
@@ -50,6 +59,7 @@ class Reporting:
         self.attribute_summary = self.config["attribute_summary"]
         self.attribute_other = self.config["attribute_other"]
         self.key_organisations = self.config["key_organisations"]
+        self.chart_theme = CHART_THEMES[self.config["chart_theme"]]
 
         if self.config["misp_verifycert"] is False:
             import urllib3
@@ -87,9 +97,10 @@ class Reporting:
             html_template = f.read()
 
         # Render the HTML
-        template = Template(html_template)
+        template = Template(html_template, autoescape=True)
         html_content = template.render(
             css=css_content,
+            show_contributors=self.config["reporting_contributors"],
             title="MISP Infrastructure summary",
             logo=self.config["logo"],
             report_date=self.report_date,
@@ -160,9 +171,10 @@ class Reporting:
             html_template = f.read()
 
         # Render the HTML
-        template = Template(html_template)
+        template = Template(html_template, autoescape=True)
         html_content = template.render(
             css=css_content,
+            show_contributors=self.config["reporting_contributors"],
             title="MISP Contributors summary",
             logo=self.config["logo"],
             report_date=self.report_date,
@@ -272,45 +284,6 @@ class Reporting:
             self.data_for_report["curation_incomplete_adm_high"] = {}
             self.logger.error(" Not found: {}".format("curation_incomplete_adm_high"))
 
-        key1 = "curation_incomplete_date"
-        key2 = "curation_complete_date"
-        if key1 in self.data and key2 in self.data:
-            self.data_for_report[key1] = self._aggregate_by_month(self.data[key1])
-            self.data_for_report[key2] = self._aggregate_by_month(self.data[key2])
-
-            all_months = set(self.data_for_report[key1].keys()) | set(self.data_for_report[key2].keys())
-            if not all_months:
-                self.logger.error("Not all months for {} or {}".format(key1, key2))
-            else:
-                sorted_months = sorted(all_months, key=lambda x: datetime.strptime(x, "%Y-%m"))
-                earliest, latest = sorted_months[0], sorted_months[-1]
-
-                full_months = self._month_range(earliest, latest)
-                values1 = [self.data_for_report[key1].get(m, 0) for m in full_months]
-                values2 = [self.data_for_report[key2].get(m, 0) for m in full_months]
-
-                self.create_bubble_chart(values1, values2, full_months, self.curated_events_bubble_path, "Event dates", "Not curated", "Curated", True)
-                self.logger.debug(" Created {} and {}".format(key1, key2))
-        else:
-            self.data_for_report[key1] = {}
-            self.data_for_report[key2] = {}
-            self.logger.error(" Not found: {} or {}".format(key1, key2))
-
-        key1 = "curation_orgs_complete"
-        key2 = "curation_orgs_incomplete"
-        if key1 in self.data and key2 in self.data:
-            dataset = self.data[key1]
-            sorted_data = dict(sorted(dataset.items(), key=lambda item: item[1], reverse=True))
-            self.data_for_report[key1] = sorted_data
-
-            dataset = self.data[key2]
-            sorted_data = dict(sorted(dataset.items(), key=lambda item: item[1], reverse=True))
-            self.data_for_report[key2] = sorted_data
-        else:
-            self.data_for_report[key1] = {}
-            self.data_for_report[key2] = {}
-            self.logger.error(" Not found: {} or {}".format(key1, key2))
-
         template_css_file = self.template_css
         with open(template_css_file, "r") as f:
             css_content = f.read()
@@ -320,9 +293,10 @@ class Reporting:
             html_template = f.read()
 
         # Render the HTML
-        template = Template(html_template)
+        template = Template(html_template, autoescape=True)
         html_content = template.render(
             css=css_content,
+            show_contributors=self.config["reporting_contributors"],
             title="MISP Curation summary",
             logo=self.config["logo"],
             report_date=self.report_date,
@@ -339,17 +313,13 @@ class Reporting:
             curation_incomplete_count=curation_incomplete_count,
 
             curation_complete=curation_complete_events,
+            show_curated_events=self.config["reporting_curated_events"],
             curation_incomplete=curation_incomplete_events,
 
             curation_incomplete_high=curation_incomplete_high_events,
             curation_incomplete_high_count=curation_incomplete_high_count,
             curation_incomplete_adm_high=curation_incomplete_adm_high_events,
             curation_incomplete_adm_high_count=curation_incomplete_adm_high_count,
-
-            curation_complete_org=self.data_for_report["curation_orgs_complete"],
-            curation_incomplete_org=self.data_for_report["curation_orgs_incomplete"],
-
-            curated_events_bubble=os.path.basename(self.curated_events_bubble_path)
         )
 
         # Save the HTML file
@@ -357,52 +327,6 @@ class Reporting:
         with open(output_html_path, "w") as f:
             f.write(html_content)
         return True
-
-    def _aggregate_by_month(self, data_dict):
-        monthly_data = defaultdict(int)
-        for date_str, count in data_dict.items():
-            year_month = date_str[:7]  # YYYY-MM
-            monthly_data[year_month] += count
-        return dict(monthly_data)
-
-    def _month_range(self, start_ym, end_ym):
-        start = datetime.strptime(start_ym, "%Y-%m")
-        end = datetime.strptime(end_ym, "%Y-%m")
-        current = start
-        result = []
-        while current <= end:
-            result.append(current.strftime("%Y-%m"))
-            year = current.year
-            month = current.month
-            if month == 12:
-                year += 1
-                month = 1
-            else:
-                month += 1
-            current = datetime(year, month, 1)
-        return result
-
-    def create_bubble_chart(self, values1, values2, full_months, output_path, title, data1_label, data2_label, full_width=False):
-        figsize = (8, 4) if full_width else (6, 4)
-        plt.figure(figsize=figsize)
-        x_positions = list(range(len(full_months)))
-        sizes1 = [v * 50 for v in values1]
-        sizes2 = [v * 50 for v in values2]
-        plt.scatter(x_positions, [0]*len(full_months), s=sizes1, alpha=0.6, c="#D35400", edgecolors="black", label=data1_label)
-        plt.scatter(x_positions, [1]*len(full_months), s=sizes2, alpha=0.6, c="#F39C12", edgecolors="black", label=data2_label)
-
-        plt.title(title, fontsize=10)
-
-        tick_positions = x_positions[::6]
-        tick_labels = [full_months[i] for i in tick_positions]
-        plt.xticks(tick_positions, tick_labels, rotation=45, ha="right", fontsize=8)
-
-        plt.ylim(-0.5, 1.5)
-        plt.yticks([0, 1], [data1_label, data2_label])
-        plt.xlabel(" ", fontsize=8)
-        plt.tight_layout()
-        plt.savefig(output_path, dpi=100)
-        plt.close()
 
     def render_report(self):
         self.logger.debug("Started {}".format(inspect.currentframe().f_code.co_name))
@@ -465,11 +389,10 @@ class Reporting:
         # ###############  Statistics attributes
         key = "statistics-attributes"
         if key in self.data:
-            dataset = self.data[key]
+            dataset = dict(sorted(self.data[key].items(), key=lambda item: item[1], reverse=True))
             self.data_for_report[key] = dataset
             self.create_bar_chart(self.data_for_report[key], self.attributes_type_bar_chart_path, "Attributes type distribution ({})".format(self.config["reporting_period"]), full_width=False, value_index=0)
             self.create_bar_chart(self.data_for_report[key], self.attributes_type_daily_bar_chart_path, "Attributes type distribution (24h)", full_width=False, value_index=1)
-            self.data_for_report[key] = dict(sorted(dataset.items(), key=lambda item: item[1], reverse=True))
             self.logger.debug(" Created {}".format(self.attributes_type_bar_chart_path))
             self.logger.debug(" Created {}".format(self.attributes_type_daily_bar_chart_path))
         else:
@@ -497,10 +420,10 @@ class Reporting:
             dataset = self.data[key]
             updated_dataset = {}
             for delkey in dataset:
-                if delkey not in self.tlp_ignore_graph:
+                if delkey not in self.tlp_ignore_graph and dataset[delkey] > 0:
                     updated_dataset[delkey] = dataset[delkey]
             self.data_for_report[key] = dataset
-            self.create_pie_chart(updated_dataset, self.tlp_pie_chart_path, "TLP", colors=["red", "orange", "green", "#d3d3d3", "#e8e6e6", "gray"])
+            self.create_pie_chart(updated_dataset, self.tlp_pie_chart_path, "TLP", colors=[TLP_COLOURS.get(tlp, "gray") for tlp in updated_dataset])
             self.logger.debug(" Created {}".format(self.tlp_pie_chart_path))
         else:
             self.tlp_pie_chart_path = self.noimage_path
@@ -683,9 +606,10 @@ class Reporting:
         with open(template_file, "r") as f:
             html_template = f.read()
 
-        template = Template(html_template)
+        template = Template(html_template, autoescape=True)
         html_content = template.render(
             css=css_content,
+            show_contributors=self.config["reporting_contributors"],
             title="MISP Summary",
             logo=self.config["logo"],
             report_date=self.report_date,
@@ -719,7 +643,8 @@ class Reporting:
             sector_targeting_bar_chart_path=os.path.basename(self.sector_targeting_bar_chart_path),
 
             reporting_filter_timestamp=reporting_filter_timestamp,
-            vulnerability_lookup_url=self.config["vulnerability_lookup_url"],
+            vulnerability_lookup_url=self.config["vulnerability_lookup_url"].rstrip("/"),
+            show_vulnerabilities=self.config["reporting_vulnerabilities"],
             attributes_with_ids_or_not=attributes_with_ids_or_not,
             cve_highlight=self.config["reporting_cve_highlight"],
         )
@@ -747,8 +672,7 @@ class Reporting:
         if all(v == 0 for v in values):
             values = [0.1] * len(values)  # Avoid fully empty chart
 
-        cmap = plt.colormaps['Oranges']
-        colors = [cmap(i / len(labels)) for i in range(len(labels))]
+        colors = self._chart_colours(len(labels))
 
         plt.figure(figsize=(6, 4))
         plt.barh(labels, values, color=colors)
@@ -797,8 +721,7 @@ class Reporting:
 
         figsize = (8, 4) if full_width else (4, 3)
 
-        cmap = plt.colormaps['Oranges']
-        colors = [cmap(i / len(labels)) for i in range(len(labels))]
+        colors = self._chart_colours(len(labels))
 
         plt.figure(figsize=figsize)
         plt.bar(labels, values, color=colors)
@@ -817,6 +740,11 @@ class Reporting:
         plt.tight_layout()
         plt.savefig(output_path, dpi=100)
         plt.close()
+
+    def _chart_colours(self, count):
+        # Skip the palest end of the colour map so that every bar stays visible on white
+        cmap = plt.colormaps[self.chart_theme["cmap"]]
+        return [cmap(0.95 - 0.55 * i / max(count - 1, 1)) for i in range(count)]
 
     def create_pie_chart(self, data, output_path, title, colors):
         labels = list(data.keys())
@@ -839,14 +767,19 @@ class Reporting:
             plt.close()
         else:
             plt.figure(figsize=(4, 3))
+            # Labels go in the legend and only the larger slices show a percentage, so that small slices do not overlap
             plt.pie(
                 sizes,
-                labels=labels,
-                autopct="%1.1f%%",
+                autopct=lambda pct: "{:.1f}%".format(pct) if pct >= 4 else "",
+                pctdistance=0.8,
                 startangle=90,
                 colors=colors,
+                textprops={'fontsize': 8},
                 wedgeprops={'width': 0.4}
             )
+            total = sum(sizes)
+            plt.legend(["{} ({:.1f}%)".format(label, 100 * size / total) for label, size in zip(labels, sizes)],
+                       loc="center left", bbox_to_anchor=(1, 0.5), fontsize=8, frameon=False)
             plt.title(title, fontsize=10)
             plt.axis("equal")
             plt.tight_layout()
@@ -858,7 +791,8 @@ class Reporting:
         values = list(data.values())
 
         plt.figure(figsize=(4, 3))
-        plt.plot(months, values, marker="o", color="#FF6600")
+        plt.plot(months, values, marker="o", color=self.chart_theme["line"])
+        plt.ylim(bottom=0)
         plt.title(title, fontsize=10)
         plt.ylabel("Count", fontsize=8)
         plt.xticks(fontsize=8, rotation=45)
@@ -877,8 +811,9 @@ class Reporting:
         second_values = [p[1] for p in pairs]
 
         plt.figure(figsize=(4, 3))
-        plt.plot(months, first_values, marker="o", color="#ffcc00", label=label1)
-        plt.plot(months, second_values, marker="o", color="#ff1e00", label=label2)
+        plt.plot(months, first_values, marker="o", color=self.chart_theme["line_pair"][0], label=label1)
+        plt.plot(months, second_values, marker="o", color=self.chart_theme["line_pair"][1], label=label2)
+        plt.ylim(bottom=0)
 
         plt.title(title, fontsize=10)
         plt.ylabel("Count", fontsize=8)

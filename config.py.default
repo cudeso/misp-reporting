@@ -17,6 +17,7 @@ config = {
         "misp_verifycert": False,
         "misp_key": "",
         "misp_page_size": 200,
+        "misp_timeout": 300,
 
         "misp_infrastructure_monitor": [
                 #{
@@ -28,6 +29,10 @@ config = {
         "vulnerability_lookup_url": "https://vulnerability.circl.lu/vuln/",
 
         "reporting_cve_highlight": 7,
+        "reporting_vulnerabilities": True,
+        "reporting_contributors": False,
+        "reporting_curated_events": True,
+        "cve_timeout": 10,
 
         "filter_sector": "misp-galaxy:sector",
         "filter_sector_count": 10,
@@ -56,6 +61,7 @@ config = {
         "output_dir": "/var/www/MISP/app/webroot/misp-reporting",
         "install_dir": "/var/www/MISP/misp-custom/misp-reporting",
         "template_css": "templates/style.css",
+        "chart_theme": "orange",
         "template_html": "templates/template.html",
         "template_curation_html": "templates/template_curation.html",
         "template_infrastructure_html": "templates/template_infrastructure.html",

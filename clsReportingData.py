@@ -6,6 +6,7 @@ import logging
 from pymisp import *
 import inspect
 import os
+import time
 import matplotlib.pyplot as plt
 from jinja2 import Template
 import plotly.express as px
@@ -22,10 +23,20 @@ class ReportingData():
         if self.config["misp_verifycert"] is False:
             import urllib3
             urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-        self.misp = PyMISP(self.config["misp_url"], self.config["misp_key"], self.config["misp_verifycert"])
+        self.misp_timeout = self.config["misp_timeout"]
+        self.misp = PyMISP(self.config["misp_url"], self.config["misp_key"], self.config["misp_verifycert"], timeout=self.misp_timeout)
         self.data = {}
-        self.data_for_reporting_period = False
-        self.data_for_today = False
+        self.period_metadata = None
+        self.data_for_reporting_period = None
+        self.data_for_today = None
+
+        # Every period is measured back from the same moment, so adjacent periods neither overlap nor leave a gap
+        self.now = int(time.time())
+        self.period_seconds = int(''.join(filter(str.isdigit, self.config["reporting_period"]))) * 86400
+        if self.config["reporting_filter_timestamp"] == "timestamp":
+            self.timestamp_field = "timestamp"
+        else:
+            self.timestamp_field = "publish_timestamp"
 
         self.attribute_summary = self.config["attribute_summary"]
         self.attribute_other = self.config["attribute_other"]
@@ -66,27 +77,10 @@ class ReportingData():
     def get_today_events_attributes(self):
         self.logger.debug("Started {}".format(inspect.currentframe().f_code.co_name))
 
-        self.data["today-events"] = {}
-        self.data["today-attributes"] = {}
-        self.data["today-attributes_ids"] = {}
-
-        response = self._get_data_for_today()
-        self.data["today-events"] = len(response)
-
-        attributesqt = 0
-        attributesqt_ids = 0
-        for event in response:
-            attributesqt += len(event["Event"]["Attribute"])
-            for attr in event["Event"]["Attribute"]:
-                if attr["to_ids"] == 1:
-                    attributesqt_ids += 1
-            for misp_object in event["Event"]["Object"]:
-                attributesqt += len(misp_object["Attribute"])
-                for attr in misp_object["Attribute"]:
-                    if attr["to_ids"] == 1:
-                        attributesqt_ids += 1
-        self.data["today-attributes"] = attributesqt
-        self.data["today-attributes_ids"] = attributesqt_ids
+        event_ids = self._event_ids(self._get_data_for_today())
+        self.data["today-events"] = len(event_ids)
+        self.data["today-attributes"] = self._count_event_attributes(event_ids)
+        self.data["today-attributes_ids"] = self._count_event_attributes(event_ids, to_ids=True)
 
     def get_trending_events_attributes(self):
         # Get the trends data
@@ -98,108 +92,74 @@ class ReportingData():
         self.data["trending-attributes"] = {}
         self.data["trending-attributes_ids"] = {}
 
-        days = int(''.join(filter(str.isdigit, self.config["reporting_period"])))
-        self.logger.debug(" Get {}".format(days))
-        response = self._get_data_for_reporting_period()
-        self.data["trending-events"][0] = len(response)
-
-        attributesqt = 0
-        attributesqt_ids = 0
-        for event in response:
-            attributesqt += len(event["Event"]["Attribute"])
-            for attr in event["Event"]["Attribute"]:
-                if attr["to_ids"] == 1:
-                    attributesqt_ids += 1
-            for misp_object in event["Event"]["Object"]:
-                attributesqt += len(misp_object["Attribute"])
-                for attr in misp_object["Attribute"]:
-                    if attr["to_ids"] == 1:
-                        attributesqt_ids += 1
-        self.data["trending-attributes"][0] = attributesqt
-        self.data["trending-attributes_ids"][0] = attributesqt_ids
-
-        count = 1
-        while self.config["reporting_trending_count"] > count:
+        days = self.period_seconds // 86400
+        self._add_trending_period(0, self._get_data_for_reporting_period())
+        for count in range(1, self.config["reporting_trending_count"]):
             start_period = days * count
-            end_period = days * (count + 1)
-            #timestamp_filter = ["{}d".format(start_period), "{}d".format(end_period)]
-            self.logger.debug(" Get {} - {}".format(start_period, end_period))
+            date_filter = (self.now - (count + 1) * self.period_seconds, self.now - count * self.period_seconds - 1)
+            self.logger.debug(" Get {}d - {}d".format(start_period, days * (count + 1)))
+            events = self._search_all_pages(self.config["reporting_filter_published"], date_filter, metadata=True)
+            self._add_trending_period(start_period, events)
 
-            current_page = 1
-            tmp_len = 0
-            response = []
-            while True:
-                filter_params = self._build_misp_filter(current_page, self.config["reporting_filter_published"], ["{}d".format(start_period), "{}d".format(end_period)])
-                tmp_response = self.misp.search("events", **filter_params)
-                if len(tmp_response) > 0:
-                    tmp_len = tmp_len + len(tmp_response)
-                    response += tmp_response
-                else:
-                    break
-                current_page += 1
-            self.data["trending-events"][start_period] = tmp_len
+    def _add_trending_period(self, start_period, events):
+        event_ids = self._event_ids(events)
+        self.data["trending-events"][start_period] = len(event_ids)
+        self.data["trending-attributes"][start_period] = self._count_event_attributes(event_ids)
+        self.data["trending-attributes_ids"][start_period] = self._count_event_attributes(event_ids, to_ids=True)
 
-            attributesqt = 0
-            attributesqt_ids = 0
-            for event in response:
-                attributesqt += len(event["Event"]["Attribute"])
-                for attr in event["Event"]["Attribute"]:
-                    if attr["to_ids"] == 1:
-                        attributesqt_ids += 1
-                for misp_object in event["Event"]["Object"]:
-                    attributesqt += len(misp_object["Attribute"])
-                    for attr in misp_object["Attribute"]:
-                        if attr["to_ids"] == 1:
-                            attributesqt_ids += 1
-            self.data["trending-attributes"][start_period] = attributesqt
-            self.data["trending-attributes_ids"][start_period] = attributesqt_ids
+    def _event_ids(self, events):
+        return [event["Event"]["id"] for event in events]
 
-            count += 1
+    def _count_event_attributes(self, event_ids, to_ids=False, types=None):
+        # Restricting the count to the event IDs keeps it identical to counting the attributes of those events,
+        # also when reporting_filter matches on attribute tags. Object attributes are included.
+        if not event_ids:
+            return 0
+        query = {"returnFormat": "count", "eventid": event_ids, "deleted": 0}
+        if to_ids:
+            query["to_ids"] = 1
+        if types:
+            query["type"] = types
+        result = self.misp.direct_call("attributes/restSearch", query)
+        if not isinstance(result, int):
+            self.logger.error("Unexpected answer when counting attributes: {}".format(result))
+            raise RuntimeError("Unable to count attributes in MISP: {}".format(result))
+        return result
 
     def get_statistics_attributes(self):
+        # One count per attribute group, the group "Other" is what remains of the total
         self.logger.debug("Started {}".format(inspect.currentframe().f_code.co_name))
-        self.data["statistics-attributes"] = {}
+        to_ids = self.config["reporting_filter_attribute_type_ids"]
 
-        response_reporting_period = self._get_data_for_reporting_period()
-        self._process_attribute_counts(response_reporting_period, index=0)
-        response_today = self._get_data_for_today()
-        self._process_attribute_counts(response_today, index=1)
+        groups = {}
+        assigned_types = set()
+        for group, types in self.attribute_summary.items():
+            # A type listed in more than one group counts for the first group only
+            groups[group] = [attribute_type for attribute_type in types if attribute_type not in assigned_types]
+            assigned_types.update(groups[group])
 
-    def _process_attribute_counts(self, events, index):
-        for event in events:
-            for attribute in event["Event"]["Attribute"]:
-                if self.config["reporting_filter_attribute_type_ids"] and attribute["to_ids"] == 0:
-                    continue
+        counts = {group: [0, 0] for group in list(groups) + [self.attribute_other]}
+        for index, events in [(0, self._get_data_for_reporting_period()), (1, self._get_data_for_today())]:
+            event_ids = self._event_ids(events)
+            total = self._count_event_attributes(event_ids, to_ids=to_ids)
+            for group, types in groups.items():
+                if types:
+                    counts[group][index] = self._count_event_attributes(event_ids, to_ids=to_ids, types=types)
+            counts[self.attribute_other][index] += total - sum(counts[group][index] for group in groups)
 
-                attribute_type = self._convert_attribute_category(attribute["type"])
-                if attribute_type and attribute_type not in self.data["statistics-attributes"]:
-                    self.data["statistics-attributes"][attribute_type] = [0, 0]
-                self.data["statistics-attributes"][attribute_type][index] += 1
-
-            for misp_object in event["Event"]["Object"]:
-                for attr in misp_object["Attribute"]:
-                    if self.config["reporting_filter_attribute_type_ids"] and attr["to_ids"] == 0:
-                        continue
-
-                    attribute_type = self._convert_attribute_category(attr["type"])
-                    if attribute_type and attribute_type not in self.data["statistics-attributes"]:
-                        self.data["statistics-attributes"][attribute_type] = [0, 0]
-                    self.data["statistics-attributes"][attribute_type][index] += 1
+        self.data["statistics-attributes"] = {group: value for group, value in counts.items() if value != [0, 0]}
 
     def get_statistics_keyorgs(self):
         self.logger.debug("Started {}".format(inspect.currentframe().f_code.co_name))
         self.data["statistics-keyorgs"] = {}
 
-        org_uuid_list = list(self.key_organisations)
-        if len(org_uuid_list) > 0:
-            for orgc in org_uuid_list:
-                self.data["statistics-keyorgs"][orgc] = {"reporting-period": {"events": 0, "attributes": 0, "attributes_ids": 0},
-                                                             "today": {"events": 0, "attributes": 0, "attributes_ids": 0}}
-
-            response = self._get_data_for_reporting_period()
-            self._process_get_statistics_keyorgs(response, "reporting-period")
-            response = self._get_data_for_today()
-            self._process_get_statistics_keyorgs(response, "today")
+        for orgc in self.key_organisations:
+            self.data["statistics-keyorgs"][orgc] = {}
+            for period, events in [("reporting-period", self._get_data_for_reporting_period()), ("today", self._get_data_for_today())]:
+                event_ids = self._event_ids([event for event in events if event["Event"]["Orgc"]["uuid"] == orgc])
+                self.data["statistics-keyorgs"][orgc][period] = {"events": len(event_ids),
+                                                                 "attributes": self._count_event_attributes(event_ids),
+                                                                 "attributes_ids": self._count_event_attributes(event_ids, to_ids=True)}
 
     def get_threatlevel(self):
         self.logger.debug("Started {}".format(inspect.currentframe().f_code.co_name))
@@ -211,19 +171,20 @@ class ReportingData():
 
     def get_tlplevel(self):
         self.logger.debug("Started {}".format(inspect.currentframe().f_code.co_name))
-        self.data["statistics-tlp"] = {"tlp:red": 0, "tlp:amber": 0, "tlp:amber+strict": 0, "tlp:green": 0, "tlp:clear": 0, "tlp:ex:chr": 0, "tlp:unclear": 0}
+        self.data["statistics-tlp"] = {"tlp:red": 0, "tlp:amber": 0, "tlp:amber+strict": 0, "tlp:green": 0, "tlp:clear": 0, "tlp:ex:chr": 0, "tlp:unclear": 0,
+                                       "no tlp": 0}
         response = self._get_data_for_reporting_period()
 
         for event in response:
-            tags = event["Event"].get("Tag", [])
-            if len(tags) > 0:
-                for tag in tags:
-                    if tag["name"].startswith("tlp:"):
-                        if tag["name"] == "tlp:white":
-                            tag_tlp = "tlp:clear"
-                        else:
-                            tag_tlp = tag["name"]
-                        self.data["statistics-tlp"][tag_tlp] += 1
+            event_tlp = set()
+            for tag in event["Event"].get("Tag", []):
+                tag_name = "".join(tag["name"].split()).lower()
+                if tag_name.startswith("tlp:"):
+                    event_tlp.add("tlp:clear" if tag_name == "tlp:white" else tag_name)
+            if not event_tlp:
+                event_tlp.add("no tlp")
+            for tag_tlp in event_tlp:
+                self.data["statistics-tlp"][tag_tlp] = self.data["statistics-tlp"].get(tag_tlp, 0) + 1
 
     def get_eventdetails(self):
         self.logger.debug("Started {}".format(inspect.currentframe().f_code.co_name))
@@ -318,29 +279,19 @@ class ReportingData():
     def get_vulnerabilities(self):
         self.logger.debug("Started {}".format(inspect.currentframe().f_code.co_name))
         self.data["vulnerabilities"] = {}
+        if not self.config["reporting_vulnerabilities"]:
+            self.logger.info("Skipping vulnerabilities, disabled with reporting_vulnerabilities")
+            return
         tmp_data = {}
-        response = self._get_data_for_reporting_period()
-        for event in response:
-            for attribute in event["Event"]["Attribute"]:
-                if attribute["type"] == "vulnerability":
-                    if attribute["value"] in tmp_data:
-                        tmp_data[attribute["value"]] += 1
-                    else:
-                        tmp_data[attribute["value"]] = 1
-            for misp_object in event["Event"]["Object"]:
-                for attribute in misp_object["Attribute"]:
-                    if attribute["type"] == "vulnerability":
-                        if attribute["value"] in tmp_data:
-                            tmp_data[attribute["value"]] += 1
-                        else:
-                            tmp_data[attribute["value"]] = 1
+        for attribute in self._search_vulnerability_attributes(self._event_ids(self._get_data_for_reporting_period())):
+            tmp_data[attribute.value] = tmp_data.get(attribute.value, 0) + 1
 
+        cve_url = self.config["cve_url"].rstrip("/")
         for cve in tmp_data:
-            cve_url = self.config["cve_url"]
             cvss_base_score = "?"
-            cve_summary = ""            
+            cve_summary = ""
             try:
-                response = requests.get(f"{cve_url}/{cve}")
+                response = requests.get(f"{cve_url}/{cve}", timeout=self.config["cve_timeout"])
                 cve_data = response.json()
 
                 containers = cve_data.get("containers", {})
@@ -370,80 +321,40 @@ class ReportingData():
         self.data["curation_complete_today"] = []
         self.data["curation_incomplete"] = []
         self.data["curation_incomplete_today"] = []
-        self.data["curation_complete_date"] = {}
-        self.data["curation_incomplete_date"] = {}
-        self.data["curation_orgs_complete"] = {}
-        self.data["curation_orgs_incomplete"] = {}
         self.data["curation_incomplete_high"] = []
         self.data["curation_incomplete_adm_high"] = []
 
-        self.distribution = self.config["distribution"]
-        self.analysis_state = self.config["analysis"]
-
-        # Reset to get curation data (published, and not published)
-        self.data_for_reporting_period = None
-        response = self._get_data_for_reporting_period(published=None)
+        # Curation covers published and unpublished events
+        response = self._get_period_metadata()
+        since = self.now - 86400
 
         for event in response:
-            complete_event = False
             entry = {"date": event["Event"]["date"],
                      "id": event["Event"]["id"],
                      "org": event["Event"]["Orgc"]["name"],
                      "info": event["Event"]["info"][:30],
                      "indicators":  event["Event"]["attribute_count"]}
-            if event["Event"]["published"]:
-                tags = event["Event"].get("Tag", [])
-                if len(tags) > 0:
-                    for tag in tags:
-                        if tag["name"] == self.workflow_complete:
-                            publish_timestamp_str = event["Event"]["publish_timestamp"]
-                            publish_timestamp = int(publish_timestamp_str)
-                            publish_time = datetime.fromtimestamp(publish_timestamp, tz=timezone.utc)
-                            now = datetime.now(timezone.utc)
-                            if (now - publish_time) < timedelta(days=1):
-                                self.data["curation_complete_today"].append(entry)
-                            self.data["curation_complete"].append(entry)
+            tag_names = [tag["name"] for tag in event["Event"].get("Tag", [])]
+            published_today = int(event["Event"]["publish_timestamp"]) >= since
 
-                            if event["Event"]["date"] in self.data["curation_complete_date"]:
-                                self.data["curation_complete_date"][event["Event"]["date"]] += 1
-                            else:
-                                self.data["curation_complete_date"][event["Event"]["date"]] = 1
-                            if event["Event"]["Orgc"]["name"] in self.data["curation_orgs_complete"]:
-                                self.data["curation_orgs_complete"][event["Event"]["Orgc"]["name"]] += 1
-                            else:
-                                self.data["curation_orgs_complete"][event["Event"]["Orgc"]["name"]] = 1
-                            complete_event = True
-                            break
+            if event["Event"]["published"] and self.workflow_complete in tag_names:
+                self.data["curation_complete"].append(entry)
+                if published_today:
+                    self.data["curation_complete_today"].append(entry)
+                continue
 
-            if not complete_event:
-                if self.config["log_incomplete"]:
-                    self.logger.debug("Consider event {} {} as incomplete".format(event["Event"]["id"], event["Event"]["info"]))
-                publish_timestamp_str = event["Event"]["publish_timestamp"]
-                publish_timestamp = int(publish_timestamp_str)
-                publish_time = datetime.fromtimestamp(publish_timestamp, tz=timezone.utc)
-                now = datetime.now(timezone.utc)
-                if (now - publish_time) < timedelta(days=1):
-                    self.data["curation_incomplete_today"].append(entry)
+            if self.config["log_incomplete"]:
+                self.logger.debug("Consider event {} {} as incomplete".format(event["Event"]["id"], event["Event"]["info"]))
+            self.data["curation_incomplete"].append(entry)
+            if published_today:
+                self.data["curation_incomplete_today"].append(entry)
+                if event["Event"]["threat_level_id"] == "1":
+                    self.data["curation_incomplete_high"].append(entry)
+                if "admiralty-scale:source-reliability=\"a\"" in tag_names:
+                    self.data["curation_incomplete_adm_high"].append(entry)
 
-                    # Additional reporting for curation of today
-                    if event["Event"]["threat_level_id"] == "1":
-                        self.data["curation_incomplete_high"].append(entry)
-                    tags = event["Event"].get("Tag", [])
-                    for tag in tags:
-                        if tag["name"] == "admiralty-scale:source-reliability=\"a\"":
-                            self.data["curation_incomplete_adm_high"].append(entry)
-                            break
-                        
-                self.data["curation_incomplete"].append(entry)
-
-                if event["Event"]["date"] in self.data["curation_incomplete_date"]:
-                    self.data["curation_incomplete_date"][event["Event"]["date"]] += 1
-                else:
-                    self.data["curation_incomplete_date"][event["Event"]["date"]] = 1
-                if event["Event"]["Orgc"]["name"] in self.data["curation_orgs_incomplete"]:
-                    self.data["curation_orgs_incomplete"][event["Event"]["Orgc"]["name"]] += 1
-                else:
-                    self.data["curation_orgs_incomplete"][event["Event"]["Orgc"]["name"]] = 1
+        for key in ["curation_incomplete_high", "curation_incomplete_adm_high"]:
+            self.data[key].sort(key=lambda entry: (entry["date"], int(entry["id"])), reverse=True)
 
     def get_infrastructure(self):
         self.logger.debug("Started {}".format(inspect.currentframe().f_code.co_name))
@@ -460,7 +371,7 @@ class ReportingData():
                     "remote_servers": []
                 }
                 try:
-                    misp_server = PyMISP(config["misp_url"], config["misp_key"], config["misp_verifycert"])
+                    misp_server = PyMISP(config["misp_url"], config["misp_key"], config["misp_verifycert"], timeout=self.misp_timeout)
                     if not misp_server:
                         self.logger.error("Unable to connect to MISP server: {}".format(name))
                         results[name]["status"] = "ERROR"
@@ -564,27 +475,6 @@ class ReportingData():
 
         self.data["infrastructure_misp"] = results
 
-    def _process_get_statistics_keyorgs(self, response, period):
-        for event in response:
-            orgc = event["Event"]["Orgc"]["uuid"]
-            if self.key_organisations.get(orgc, False):
-                attributesqt = 0
-                attributesqt_ids = 0
-                attributesqt = len(event["Event"]["Attribute"])
-                for attr in event["Event"]["Attribute"]:
-                    if attr["to_ids"] == 1:
-                        attributesqt_ids += 1
-
-                for misp_object in event["Event"]["Object"]:
-                    attributesqt += len(misp_object["Attribute"])
-                    for attr in misp_object["Attribute"]:
-                        if attr["to_ids"] == 1:
-                            attributesqt_ids += 1
-
-                self.data["statistics-keyorgs"][orgc][period]["events"] += 1
-                self.data["statistics-keyorgs"][orgc][period]["attributes"] += attributesqt
-                self.data["statistics-keyorgs"][orgc][period]["attributes_ids"] += attributesqt_ids
-
     def _build_misp_filter(self, current_page, published, date_filter):
         filter_params = {
             "limit": self.config["misp_page_size"],
@@ -601,51 +491,70 @@ class ReportingData():
             filter_params["publish_timestamp"] = date_filter
         return filter_params
 
-    def _get_data_for_reporting_period(self, published=True):
+    def _search_all_pages(self, published, date_filter, **search_options):
         response = []
-        if not self.data_for_reporting_period:
-            current_page = 1
-            while True:
-                if not published:
-                    filter_params = self._build_misp_filter(current_page, published, self.config["reporting_period"])
-                else:
-                    filter_params = self._build_misp_filter(current_page, self.config["reporting_filter_published"], self.config["reporting_period"])
-                tmp_reponse = self.misp.search("events", **filter_params)
-                if len(tmp_reponse) > 0:
-                    response = response + tmp_reponse
-                else:
-                    break
-                current_page += 1
-            self.data_for_reporting_period = response
+        current_page = 1
+        while True:
+            filter_params = self._build_misp_filter(current_page, published, date_filter)
+            # Galaxy clusters, proposals, event reports and sharing group details are not used by any report and
+            # make MISP several times slower, also for metadata. Galaxy tags remain in Event.Tag.
+            filter_params.update(excludeGalaxy=True, noShadowAttributes=True, noEventReports=True, sg_reference_only=True)
+            filter_params.update(search_options)
+            tmp_response = self.misp.search("events", **filter_params)
+            if isinstance(tmp_response, dict) and "errors" in tmp_response:
+                self.logger.error("MISP event search failed on page {}: {}".format(current_page, tmp_response["errors"]))
+                raise RuntimeError("MISP event search failed: {}".format(tmp_response["errors"]))
+            if not tmp_response:
+                break
+            response.extend(tmp_response)
+            current_page += 1
+        return response
+
+    def _search_vulnerability_attributes(self, event_ids):
+        response = []
+        if not event_ids:
+            return response
+        current_page = 1
+        while True:
+            tmp_response = self.misp.search("attributes", type_attribute="vulnerability", eventid=event_ids, deleted=0,
+                                            limit=self.config["misp_page_size"], page=current_page, pythonify=True)
+            if isinstance(tmp_response, dict) and "errors" in tmp_response:
+                self.logger.error("MISP attribute search failed on page {}: {}".format(current_page, tmp_response["errors"]))
+                raise RuntimeError("MISP attribute search failed: {}".format(tmp_response["errors"]))
+            if not tmp_response:
+                break
+            response.extend(tmp_response)
+            current_page += 1
+        return response
+
+    def _get_period_metadata(self):
+        # Fetched once for every section, published and unpublished events alike
+        if self.period_metadata is None:
+            self.period_metadata = self._search_all_pages(None, (self.now - self.period_seconds, self.now), metadata=True)
+        return self.period_metadata
+
+    def _get_data_for_reporting_period(self):
+        # Same selection as an event search with the configured publication state. In timestamp mode
+        # _build_misp_filter ignores the publication state, so this does too.
+        if self.data_for_reporting_period is None:
+            published = self.config["reporting_filter_published"]
+            if self.config["reporting_filter_timestamp"] == "timestamp" or published is None:
+                self.data_for_reporting_period = self._get_period_metadata()
+            else:
+                self.data_for_reporting_period = [event for event in self._get_period_metadata()
+                                                  if bool(event["Event"]["published"]) == bool(published)]
         return self.data_for_reporting_period
 
-    def _get_data_for_today(self, published=True):
-        response = []
-        if not self.data_for_today:
-            current_page = 1
-            while True:
-                filter_params = self._build_misp_filter(current_page, self.config["reporting_filter_published"], "1d")
-                tmp_reponse = self.misp.search("events", **filter_params)
-                if len(tmp_reponse) > 0:
-                    response = response + tmp_reponse
-                else:
-                    break
-                current_page += 1
-            self.data_for_today = response
+    def _get_data_for_today(self):
+        # The last 24h is a subset of the reporting period, selected on the same timestamp the query filters on
+        if self.data_for_today is None:
+            since = self.now - 86400
+            self.data_for_today = [event for event in self._get_data_for_reporting_period()
+                                   if int(event["Event"][self.timestamp_field]) >= since]
         return self.data_for_today
 
-    def _convert_attribute_category(self, category):
-        found_key = None
-        for key, values in self.attribute_summary.items():
-            if category in values:
-                found_key = key
-                break
-        if found_key:
-            return found_key
-        return self.attribute_other
-
     def _request_get(self, endpoint):
-        response = requests.get("{}/{}".format(self.config["misp_url"], endpoint), headers=self.misp_headers, verify=self.config["misp_verifycert"])
+        response = requests.get("{}/{}".format(self.config["misp_url"], endpoint), headers=self.misp_headers, verify=self.config["misp_verifycert"], timeout=self.misp_timeout)
         if response.ok:
             return response
         elif 400 <= response.status_code < 500:
@@ -663,7 +572,7 @@ class ReportingData():
                       "org_count": self.data["statistics"]["org_count"],
                       "local_org_count": self.data["statistics"]["local_org_count"]}
         
-        today_statistics = {"today_event_count": self.data["today-attributes"],
+        today_statistics = {"today_event_count": self.data["today-events"],
                             "today_attribute_count": self.data["today-attributes"],
                             "today_attribute_ids_count": self.data["today-attributes_ids"]}
 

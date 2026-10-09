@@ -18,8 +18,18 @@ from clsReporting import *
 from clsReportingData import *
 from clsReportingStatistics import *
 
+# Settings added in later versions, so that an older config.py keeps working
+DEFAULT_SETTINGS = {"misp_timeout": 300,
+                    "cve_timeout": 10,
+                    "reporting_vulnerabilities": True,
+                    "reporting_contributors": False,
+                    "reporting_curated_events": True,
+                    "chart_theme": "orange"}
+
 
 def main(config):
+    for key, value in DEFAULT_SETTINGS.items():
+        config.setdefault(key, value)
     logger.info("Start {}".format(config["logname"]))
 
     data = ReportingData(config, logger)
@@ -38,7 +48,8 @@ def main(config):
     data.get_curation()
 
     data.get_misp_statistics()
-    data.get_contributors()
+    if config["reporting_contributors"]:
+        data.get_contributors()
 
     data.get_infrastructure()
     
@@ -47,7 +58,8 @@ def main(config):
     reporting.render_report()
     reporting.render_curation_report()
     reporting.render_infrastructure()
-    reporting.render_contributors()
+    if config["reporting_contributors"]:
+        reporting.render_contributors()
     
 
     statistics = ReportingStatistics(config, logger, data.statistics, data.today_statistics, data.statistics_attributes)

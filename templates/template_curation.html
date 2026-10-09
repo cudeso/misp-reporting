@@ -20,7 +20,9 @@
         <div class="button-bar">
             <a href="misp_summary.html" class="summary">Summary</a>
             <a href="misp_curation.html" class="section">Curation Overview</a>
+            {% if show_contributors %}
             <a href="misp_contributors.html" class="section">Top contributors</a>
+            {% endif %}
             <a href="misp_infrastructure.html" class="section">Infrastructure Monitoring</a>
             <a href="{{ report_misp_server }}" class="login" target="_blank">
               <img 
@@ -82,53 +84,10 @@
                 </tr>
             </tbody>
         </table>
-
-        <h2>Event dates <span class="sub_h2">(event dates indicate when a threat occurred and are set by the event creator)</span></h2>
-        <div class="charts">
-            <div class="chart">
-                <img src="{{ curated_events_bubble }}" alt="Bubble graph of curation results">
-            </div>
-        </div>
-
-        <h1>Curation for last {{ reporting_period }}</h1>
-        <div class="tables">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Organisation</th>
-                        <th>Curated events</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for org, value in curation_complete_org.items() %}
-                    <tr>
-                        <td>{{ org }}</td>
-                        <td>{{ value }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Organisation</th>
-                        <th>Not curated events</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for org, value in curation_incomplete_org.items() %}
-                    <tr>
-                        <td>{{ org }}</td>
-                        <td>{{ value }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
     </div>
 
     <div class="container">
-        <h2>Events waiting for curation - Threat level high</h2>
+        <h2>Events waiting for curation - Threat level high <span class="sub_h2">(published in the last 24h, most recent event date first)</span></h2>
         <table class="table">
             <thead>
                 <tr>
@@ -148,11 +107,13 @@
                     <td class="align-left">{{ event.info }}</td>
                     <td class="align-right">{{ event.indicators }}</td>               
                 </tr>
+                {% else %}
+                <tr><td colspan="5" class="empty-state">No high threat level events waiting for curation in the last 24h</td></tr>
                 {% endfor %}
             </tbody>
         </table>
 
-        <h2>Events waiting for curation - Admiralty scale : Source Reliability: Completely reliable (A)</h2>
+        <h2>Events waiting for curation - Admiralty scale : Source Reliability: Completely reliable (A) <span class="sub_h2">(published in the last 24h, most recent event date first)</span></h2>
         <table class="table">
             <thead>
                 <tr>
@@ -172,34 +133,13 @@
                     <td class="align-left">{{ event.info }}</td>
                     <td class="align-right">{{ event.indicators }}</td>               
                 </tr>
+                {% else %}
+                <tr><td colspan="5" class="empty-state">No events from completely reliable sources waiting for curation in the last 24h</td></tr>
                 {% endfor %}
             </tbody>
         </table>
 
-        <h2>Events waiting for curation</h2>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>ID</th>                    
-                    <th>Date</th>
-                    <th>Organisation</th>
-                    <th>Event title</th>
-                    <th>Attributes</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for event in curation_incomplete %}
-                <tr>
-                    <td><a href="{{ report_misp_server }}/events/view/{{ event.id }}">{{ event.id }}</a></td>                    
-                    <td>{{ event.date }}</td>
-                    <td class="align-left">{{ event.org }}</td>
-                    <td class="align-left">{{ event.info }}</td>
-                    <td class="align-right">{{ event.indicators }}</td>               
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-
+        {% if show_curated_events %}
         <h2>Curated events</h2>
         <table class="table">
             <thead>
@@ -220,9 +160,12 @@
                     <td class="align-left">{{ event.info }}</td>
                     <td class="align-right">{{ event.indicators }}</td>               
                 </tr>
+                {% else %}
+                <tr><td colspan="5" class="empty-state">No curated events in this period</td></tr>
                 {% endfor %}
             </tbody>
         </table>
+        {% endif %}
 
     </div>
 

@@ -141,15 +141,7 @@ The opening section lists how many events are awaiting curation, how many highâ€
 
 ![docs/misp-reporting-curation-1.png](docs/misp-reporting-curation-1.png)
 
-Next, the report plots the dates of curated and uncurated events so you can see whether outstanding items are recent or historic.
-
-![docs/misp-reporting-curation-2.png](docs/misp-reporting-curation-2.png)
-
-You can also view the volume of curated versus uncurated events per organisation.
-
-![docs/misp-reporting-curation-3.png](docs/misp-reporting-curation-3.png)
-
-Finally, a table lists the individual events, highlighting those with high threat levels and those from fully reliable sources. This helps you prioritise urgent reviews. For automation ideas see the MISP playbook [Curate threat events](https://misp.github.io/misp-playbooks/misp-playbooks/pb_curate_misp_events-with_output.html).
+Next, two tables list the events published in the last 24 hours that are still waiting for curation, first those with a high threat level and then those from completely reliable sources (Admiralty scale A). Both are sorted on event date, the most recent first, to help you prioritise urgent reviews. A last table lists the curated events of the reporting period. On a busy server this list can make the page large; set `reporting_curated_events` to `False` to leave it out. For automation ideas see the MISP playbook [Curate threat events](https://misp.github.io/misp-playbooks/misp-playbooks/pb_curate_misp_events-with_output.html).
 
 ![docs/misp-reporting-curation-4.png](docs/misp-reporting-curation-4.png)
 
@@ -173,7 +165,6 @@ All images are stored in the report directory and may be reused elsewhere:
 
 - `attributes_bar_chart.png`  
 - `attributes_type_bar_chart.png`  
-- `curated_events_bubble_chart.png`  
 - `geo_targeting_map.png`  
 - `threatlevel_bar_chart.png`  
 - `threat_levels_bar.png`  
@@ -216,17 +207,26 @@ Define the length of the reporting period (`reporting_period`), how many periods
         "print_event_details": False,
 ```
 
-MISP connection settings follow. Provide the instance URL, whether to verify the certificate, and an API key. `misp_page_size` controls pagination. `cve_url` and `vulnerability_lookup_url` supply vulnerability information. `reporting_cve_highlight` sets the CVSS threshold for highlighting CVEs.
+MISP connection settings follow. Provide the instance URL, whether to verify the certificate, and an API key. `misp_page_size` controls pagination. `misp_timeout` is the number of seconds to wait for an answer from MISP before giving up, so that a stalled request ends the run with an error instead of hanging. `cve_url` and `vulnerability_lookup_url` supply vulnerability information. `reporting_cve_highlight` sets the CVSS threshold for highlighting CVEs.
+
+Set `reporting_vulnerabilities` to `False` to leave out the section on vulnerabilities and weaknesses. The CVE details are then not looked up either, which saves one request to `cve_url` per CVE. `cve_timeout` limits how long each of these lookups may take, in seconds.
+
+The page with the top contributors is off by default. Set `reporting_contributors` to `True` to collect its data and add it to the navigation bar. While it is off, a `misp_contributors.html` left by an earlier run stays in the output directory until you remove it.
 
 ```
         "misp_url": "",
         "misp_verifycert": False,
         "misp_key": "",
         "misp_page_size": 200,
+        "misp_timeout": 300,
         "cve_url": "https://cvepremium.circl.lu/api/cve/",
         "vulnerability_lookup_url": "https://vulnerability.circl.lu/vuln/",
 
         "reporting_cve_highlight": 7,
+        "reporting_vulnerabilities": True,
+        "reporting_contributors": False,
+        "reporting_curated_events": True,
+        "cve_timeout": 10,
 ```
 
 Filter options:
@@ -264,13 +264,14 @@ Key organisations and their logos:
                               "5677fc72-f46c-49f3-b5f3-7245ff32448e": {"logo": "5677fc72-f46c-49f3-b5f3-7245ff32448e.png"}},
 ```
 
-Installation paths, templates, and appearance:
+Installation paths, templates, and appearance. `chart_theme` sets the colours of the graphs and can be `orange`, `blue` or `red`, to match `templates/style.css`, `templates/style-blue.css` or `templates/style-red.css`.
 
 ```
         "output_assets": "assets",
         "output_dir": "/var/www/MISP/app/webroot/misp-reporting",
         "install_dir": "/var/www/MISP/misp-custom/misp-reporting",
         "template_css": "templates/style.css",
+        "chart_theme": "orange",
         "template_html": "templates/template.html",
         "template_curation_html": "templates/template_curation.html",
         "template_infrastructure_html": "templates/template_infrastructure.html",

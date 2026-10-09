@@ -154,3 +154,47 @@ h2 span.sub_h2 {
 .status-default {
   color: #333; /* Default text colour */
 }
+
+/* Layout and readability */
+.container h1 {
+    font-size: 1.4rem;
+    color: #cc5200;
+    margin-top: 0;
+}
+.container h2 {
+    font-size: 1.1rem;
+    color: #cc5200;
+    border-bottom: 1px solid #e3e3e3;
+    padding-bottom: 6px;
+    margin-top: 28px;
+}
+.chart img {
+    max-width: 100%;
+    height: auto;
+}
+.table tbody tr:nth-child(even) {
+    background-color: #fdf6f0;
+}
+.table tbody tr:hover {
+    background-color: #fbeadb;
+}
+td {
+    font-variant-numeric: tabular-nums;
+}
+td.empty-state {
+    color: #898787;
+    font-style: italic;
+    text-align: center;
+}
+@media (max-width: 760px) {
+    .container {
+        margin: 12px;
+        padding: 12px;
+    }
+    .button-bar {
+        flex-wrap: wrap;
+    }
+    .charts, .tables {
+        flex-direction: column;
+    }
+}

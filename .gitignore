@@ -1,1 +1,6 @@
 config.py
+CLAUDE.md
+venv/*
+venv/
+misp-reporting.log
+misp-reporting/

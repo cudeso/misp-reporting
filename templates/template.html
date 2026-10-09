@@ -20,7 +20,9 @@
         <div class="button-bar">
             <a href="misp_summary.html" class="summary">Summary</a>
             <a href="misp_curation.html" class="section">Curation Overview</a>
+            {% if show_contributors %}
             <a href="misp_contributors.html" class="section">Top contributors</a>
+            {% endif %}
             <a href="misp_infrastructure.html" class="section">Infrastructure Monitoring</a>
             <a href="{{ report_misp_server }}" class="login" target="_blank">
               <img 
@@ -360,6 +362,7 @@
         </div>        
     </div>
 
+    {% if show_vulnerabilities %}
     <div class="container">
         <h2>Vulnerabilities and weaknesses found in {{reporting_filter_timestamp}} events ({{ reporting_period }})</h2>
         <div class="tables">
@@ -367,17 +370,17 @@
                 <thead>
                     <tr>
                         <th>Vulnerability</th>
-			<th>Events</th>
+                        <th>Events</th>
                         <th>Summary</th>
-                        <th>CVSSv3</th></h>
+                        <th>CVSSv3</th>
                         <th>Count</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for cve, detail in vulnerabilities.items() %}
                     <tr>
-                        <td class="align-topleft"><a href="{{ vulnerability_lookup_url}}/{{ cve }}" target="_blank">{{ cve }}</a></td>
-                        <td class="align-topleft"><a href="{{ report_misp_server }}/events/index/searchall:{{ cve }}" target="_blank">MISP</a></td>
+                        <td class="align-topleft"><a href="{{ vulnerability_lookup_url }}/{{ cve|urlencode }}" target="_blank">{{ cve }}</a></td>
+                        <td class="align-topleft"><a href="{{ report_misp_server }}/events/index/searchall:{{ cve|urlencode }}" target="_blank">MISP</a></td>
                         <td class="align-left">{{ detail.summary }}</td>
                         <td>{{ detail.cvss3 }}
                             {% if detail.cvss3|float > cve_highlight|float %}
@@ -386,11 +389,14 @@
                         </td>
                         <td class="align-right">{{ detail.count }}</td>
                     </tr>
+                    {% else %}
+                    <tr><td colspan="5" class="empty-state">No vulnerabilities referenced in this period</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
-        </div>        
+        </div>
     </div>
+    {% endif %}
 
     <footer>
         Source server: {{ report_misp_server }}<br />
